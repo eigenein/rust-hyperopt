@@ -1,0 +1,44 @@
+[package]
+authors = ["Pavel Perestoronin <eigenein@gmail.com>"]
+categories = [] # TODO
+description = "My package description" # TODO
+edition = "2021"
+keywords = [] # TODO
+license-file = "LICENSE"
+name = "my-package-name" # TODO
+publish = false
+readme = "README.md"
+repository = "https://github.com/eigenein/rust-template" # TODO
+version = "0.0.1"
+
+[profile.dev]
+split-debuginfo = "unpacked"
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+strip = true
+
+[lints.clippy]
+
+# Categories:
+all = "warn"
+nursery = "warn"
+pedantic = "warn"
+
+# Individual flags:
+future_not_send = "allow"
+missing_errors_doc = "allow"
+module_name_repetitions = "allow"
+
+[dependencies]
+anyhow = { version = "1.0.79", features = ["backtrace"] }
+clap = { version = "4.4.16", features = ["cargo", "derive", "env"] }
+dotenvy = "0.15.7"
+# futures = { version = "0.3.30", default-features = false, features = ["std"] }
+# reqwest = { version = "0.11.22", default-features = false, features = ["gzip", "json", "rustls-tls"] }
+sentry = { version = "0.32.1", default-features = false, features = ["anyhow", "backtrace", "contexts", "panic", "reqwest", "rustls", "tracing"] }
+# tokio = { version = "1.35.1", features = ["macros", "rt-multi-thread"] }
+tracing = "0.1.40"
+tracing-appender = "0.2.3"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
