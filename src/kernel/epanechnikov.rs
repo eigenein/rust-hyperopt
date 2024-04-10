@@ -54,8 +54,8 @@ macro_rules! impl_kernel {
     };
 }
 
-impl_kernel!(f32, crate::consts::f32::SQRT5);
-impl_kernel!(f64, crate::consts::f64::SQRT5);
+impl_kernel!(f32, crate::consts::f32::SQRT_5);
+impl_kernel!(f64, crate::consts::f64::SQRT_5);
 
 /// Pick and return the two smallest numbers.
 fn min_2<T: PartialOrd>(mut x1: T, mut x2: T, x3: T) -> (T, T) {

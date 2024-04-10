@@ -80,7 +80,7 @@ pub struct Component<K, T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::kernel::Uniform;
+    use crate::{consts::f32::SQRT_3, kernel::Uniform};
 
     #[test]
     fn sample_single_component_ok() {
@@ -90,6 +90,6 @@ mod tests {
             bandwidth: 1.0,
         };
         let sample = KernelDensityEstimator([component]).sample(&mut fastrand::Rng::new());
-        assert!((-1.0..=1.0).contains(&sample));
+        assert!((-SQRT_3..=SQRT_3).contains(&sample));
     }
 }
