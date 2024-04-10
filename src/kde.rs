@@ -1,7 +1,6 @@
 use std::ops::{Add, Div, Mul, RangeInclusive, Sub};
 
-use crate::{Density, Sample};
-use crate::rand::UniformRange;
+use crate::{rand::UniformRange, Density, Sample};
 
 /// [Kernel density estimator][1].
 ///
@@ -18,12 +17,16 @@ where
 {
     /// Calculate the KDE's density at the specified point.
     fn density(&self, at: T) -> T {
-        let (n_points, sum) = self.0
+        let (n_points, sum) = self
+            .0
             .into_iter()
             .fold((0_usize, T::zero()), |(n, sum), point| {
                 (
                     n + 1,
-                    sum + point.kernel.density((at - point.location) / point.bandwidth) / point.bandwidth,
+                    sum + point
+                        .kernel
+                        .density((at - point.location) / point.bandwidth)
+                        / point.bandwidth,
                 )
             });
         sum / n_points.into()
@@ -48,14 +51,14 @@ where
     ///
     /// This method panics if called on an empty estimator.
     fn sample(&self, rng: &mut RNG) -> T {
-        let mut component = None;
-        for (i, other) in self.0.into_iter().enumerate() {
-            if rng.uniform_range(0..=i) == 0 {
-                component = Some(other);
-            }
-        }
+        let component = self
+            .0
+            .into_iter()
+            .enumerate()
+            .filter(|(i, _)| rng.uniform_range(0..=*i) == 0)
+            .last()
+            .expect("KDE must have at least one component").1;
 
-        let component = component.expect("KDE must have at least one component");
         component.kernel.sample(rng) * component.bandwidth + component.location
     }
 }
