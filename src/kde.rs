@@ -57,7 +57,8 @@ where
             .enumerate()
             .filter(|(i, _)| rng.uniform_range(0..=*i) == 0)
             .last()
-            .expect("KDE must have at least one component").1;
+            .expect("KDE must have at least one component")
+            .1;
 
         component.kernel.sample(rng) * component.bandwidth + component.location
     }
@@ -74,4 +75,21 @@ pub struct Component<K, T> {
 
     /// Bandwidth of the corresponding kernel.
     pub bandwidth: T,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::kernel::Uniform;
+
+    #[test]
+    fn sample_single_component_ok() {
+        let component = Component {
+            kernel: Uniform,
+            location: 0.0,
+            bandwidth: 1.0,
+        };
+        let sample = KernelDensityEstimator([component]).sample(&mut fastrand::Rng::new());
+        assert!((-1.0..=1.0).contains(&sample));
+    }
 }

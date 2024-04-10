@@ -1,5 +1,10 @@
 mod epanechnikov;
 mod gaussian;
+mod uniform;
+
+pub use self::epanechnikov::Epanechnikov;
+pub use self::gaussian::Gaussian;
+pub use self::uniform::Uniform;
 
 /// [Kernel][1] density function.
 ///
