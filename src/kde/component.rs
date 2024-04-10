@@ -1,5 +1,7 @@
-use std::{collections::Bound, ops::RangeBounds};
-use std::ops::{Div, Sub};
+use std::{
+    collections::Bound,
+    ops::{Div, RangeBounds, Sub},
+};
 
 use crate::{kernel::Uniform, Density};
 

@@ -9,7 +9,7 @@ use crate::{rand::UniformRange, Density, Sample};
 ///
 /// [1]: https://en.wikipedia.org/wiki/Kernel_density_estimation
 #[derive(Copy, Clone, Debug)]
-pub struct KernelDensityEstimator<I>(I);
+pub struct KernelDensityEstimator<I>(pub I);
 
 impl<T, I, K> Density<T> for KernelDensityEstimator<I>
 where

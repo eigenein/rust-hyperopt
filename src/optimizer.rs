@@ -1,7 +1,6 @@
 use std::collections::BTreeSet;
-use crate::kde::Component;
 
-use crate::optimizer::trial::Trial;
+use crate::{kde::Component, optimizer::trial::Trial};
 
 mod trial;
 
@@ -13,29 +12,30 @@ mod trial;
 /// - [`KS`]: kernel type of the trials, it may (and will likely) be different from the prior component
 /// - [`P`]: type of parameter that is optimized
 /// - [`M`]: value of the target function, the less – the better
-pub struct Optimizer<K1, KS, P, M> {
+pub struct Optimizer<R, K1, P, M> {
+    range: R,
     first_component: Component<K1, P>,
     cutoff: f64,
     n_candidates: usize,
-    n_trials: usize,
     trials: BTreeSet<Trial<P, M>>,
 }
 
-impl<K1, KS, P, M> Optimizer<K1, KS, P, M> {
+impl<R, K1, P, M> Optimizer<R, K1, P, M> {
     /// Construct the new optimizer.
     ///
     /// Here begins your adventure!
     ///
     /// # Parameters
     ///
+    /// - `range`: parameter range
     /// - `first_component`: your prior belief about which values of the searched parameter is more optimal
-    pub const fn new(first_component: Component<K1, P>) -> Self {
+    pub const fn new(range: R, first_component: Component<K1, P>) -> Self {
         Self {
+            range,
             first_component,
             trials: BTreeSet::new(),
             cutoff: 0.1,
             n_candidates: 25,
-            n_trials: 0,
         }
     }
 
@@ -55,15 +55,28 @@ impl<K1, KS, P, M> Optimizer<K1, KS, P, M> {
     }
 }
 
-impl<K1, KS, P, M: Ord> Optimizer<K1, KS, P, M> {
+impl<R, K1, P: Ord, M: Ord> Optimizer<R, K1, P, M> {
     /// Provide the information about the trial, or in other words, «fit» the optimizer on the sample.
+    ///
+    /// Normally, you'll call your target function on parameters supplied by [`Optimizer::new_trial`],
+    /// and feed back the results. But you also can feed it with any arbitrary parameters.
     ///
     /// # Parameters
     ///
     /// - `parameter`: the target function parameter
     /// - `metric`: the target function metric
     pub fn feed_back(&mut self, parameter: P, metric: M) {
-        self.trials.insert(Trial { parameter, metric, tag: self.n_trials });
-        self.n_trials += 1;
+        self.trials.insert(Trial { parameter, metric });
+    }
+}
+
+impl<R, K1, P, M: Ord> Optimizer<R, K1, P, M> {
+    /// Generate a parameter value for a new trial.
+    ///
+    /// After evaluating the target function with this parameter,
+    /// you'd better feed the metric back with [`Optimizer::feed_back`].
+    pub fn new_trial(&self) -> P {
+        // Abandon hope, all ye who enter here!
+        todo!()
     }
 }

@@ -1,37 +1,44 @@
-use std::cmp::Ordering;
+use std::{collections::BTreeSet, fmt::Debug};
 
 /// Single trial in the optimizer.
 ///
 /// Note that trials are ordered first by metric, and then by tag.
-#[derive(Debug)]
+#[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Trial<P, M> {
     pub metric: M,
     pub parameter: P,
-
-    /// Workaround to store trials in a [`std::collections::BTreeSet`]:
-    /// it is used to distinguish trials which yielded the same metric.
-    pub tag: usize,
 }
 
-impl<P, M: Ord> Eq for Trial<P, M> {}
+/// Ordered collection of trials.
+///
+/// Here be dragons! 🐉 It basically maintains two inner collections:
+///
+/// - Set of trials (a pair of parameter and metric, ordered by metric): that allows tracking of
+///   the best (worst) trials
+/// - Set of parameters, ordered by parameter itself: that allows to estimate bandwidth for each trial
+///
+/// All this is for the sake of insertion and removal in `O(n)` time.
+///
+/// The optimizer **should not** try the same parameter twice.
+pub struct Trials<P, M> {
+    by_metric: BTreeSet<Trial<P, M>>,
+    by_parameter: BTreeSet<P>,
+}
 
-impl<P, M: Ord> PartialEq<Self> for Trial<P, M> {
-    fn eq(&self, other: &Self) -> bool {
-        self.cmp(other) == Ordering::Equal
+impl<P: Copy + Ord, M: Ord> Trials<P, M> {
+    /// Push the trial to the collection.
+    pub fn push(&mut self, trial: Trial<P, M>) {
+        if self.by_parameter.insert(trial.parameter) {
+            assert!(self.by_metric.insert(trial));
+            assert_eq!(self.by_parameter.len(), self.by_metric.len());
+        }
     }
-}
 
-impl<P, M: Ord> PartialOrd<Self> for Trial<P, M> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl<P, M: Ord> Ord for Trial<P, M> {
-    fn cmp(&self, other: &Self) -> Ordering {
-        match self.metric.cmp(&other.metric) {
-            ordering @ (Ordering::Less | Ordering::Greater) => ordering,
-            Ordering::Equal => self.tag.cmp(&other.tag),
+    /// Remove the trial from the collection.
+    pub fn remove(&mut self, trial: Trial<P, M>) {
+        if self.by_parameter.remove(&trial.parameter) {
+            assert!(self.by_metric.remove(&trial));
+            assert_eq!(self.by_parameter.len(), self.by_metric.len());
         }
     }
 }
@@ -42,12 +49,14 @@ mod tests {
 
     #[test]
     fn ordering_ok() {
-        assert!(Trial { metric: 42, parameter: 0, tag: 1 } < Trial { metric: 43, parameter: 0, tag: 0 });
-    }
-
-    #[test]
-    fn equality_ok() {
-        assert_ne!(Trial { metric: 42, parameter: 0, tag: 1 }, Trial { metric: 42, parameter: 0, tag: 2 });
-        assert_eq!(Trial { metric: 42, parameter: 0, tag: 1 }, Trial { metric: 42, parameter: 1, tag: 1 });
+        assert!(
+            Trial {
+                metric: 42,
+                parameter: 1,
+            } < Trial {
+                metric: 43,
+                parameter: 0,
+            }
+        );
     }
 }

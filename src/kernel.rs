@@ -2,9 +2,7 @@ mod epanechnikov;
 mod gaussian;
 mod uniform;
 
-pub use self::epanechnikov::Epanechnikov;
-pub use self::gaussian::Gaussian;
-pub use self::uniform::Uniform;
+pub use self::{epanechnikov::Epanechnikov, gaussian::Gaussian, uniform::Uniform};
 
 /// [Kernel][1] density function.
 ///
