@@ -35,7 +35,7 @@ module_name_repetitions = "allow"
 
 [dependencies]
 fastrand = "2.0.2"
+num-traits = "0.2.18"
 
 [dev-dependencies]
 approx = "0.5.1"
-num-traits = "0.2.18"
