@@ -1,5 +1,8 @@
+mod component;
+
 use std::ops::{Add, Div, Mul, RangeInclusive, Sub};
 
+pub use self::component::Component;
 use crate::{rand::UniformRange, Density, Sample};
 
 /// [Kernel density estimator][1].
@@ -62,19 +65,6 @@ where
 
         component.kernel.sample(rng) * component.bandwidth + component.location
     }
-}
-
-/// Single Kernel Density Estimator component.
-#[derive(Copy, Clone, Debug)]
-pub struct Component<K, T> {
-    /// Kernel function.
-    pub kernel: K,
-
-    /// Center of the corresponding kernel.
-    pub location: T,
-
-    /// Bandwidth of the corresponding kernel.
-    pub bandwidth: T,
 }
 
 #[cfg(test)]
