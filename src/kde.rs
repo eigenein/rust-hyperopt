@@ -23,14 +23,8 @@ where
         let (n_points, sum) = self
             .0
             .into_iter()
-            .fold((0_usize, T::zero()), |(n, sum), point| {
-                (
-                    n + 1,
-                    sum + point
-                        .kernel
-                        .density((at - point.location) / point.bandwidth)
-                        / point.bandwidth,
-                )
+            .fold((0_usize, T::zero()), |(n, sum), component| {
+                (n + 1, sum + component.density(at))
             });
         sum / n_points.into()
     }
