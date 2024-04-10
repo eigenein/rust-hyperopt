@@ -1,4 +1,10 @@
-/// Uniform distribution.
+//! This crate, by its nature, uses a lot of random sampling.
+//! While only [`fastrand`] is supported at the moment, the traits here make it possible
+//! to add other random generators, for example, [`rand`].
+
+use std::ops::RangeBounds;
+
+/// Parameterless uniform distribution.
 pub trait Uniform<T> {
     fn uniform(&mut self) -> T;
 }
@@ -24,5 +30,18 @@ impl Uniform<f32> for fastrand::Rng {
     #[inline]
     fn uniform(&mut self) -> f32 {
         self.f32()
+    }
+}
+
+/// Uniform distribution over a range.
+pub trait UniformRange<R, T> {
+    fn uniform_range(&mut self, range: R) -> T;
+}
+
+impl<R: RangeBounds<usize>> UniformRange<R, usize> for fastrand::Rng {
+    /// Generate a random [`usize`] in the specified range.
+    #[inline]
+    fn uniform_range(&mut self, range: R) -> usize {
+        self.usize(range)
     }
 }

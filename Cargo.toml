@@ -3,7 +3,7 @@ authors = ["Pavel Perestoronin <eigenein@gmail.com>"]
 categories = ["mathematics", "science"]
 description = "Tree-of-Parzen-estimators hyperparameter optimization"
 edition = "2021"
-keywords = ["machine-learning", "optimization", "hyperparameters"]
+keywords = ["machine-learning", "optimization", "hyperparameters", "kde"]
 license-file = "LICENSE"
 name = "hyperopt"
 publish = false
@@ -38,3 +38,4 @@ fastrand = "2.0.2"
 
 [dev-dependencies]
 approx = "0.5.1"
+num-traits = "0.2.18"
