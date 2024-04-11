@@ -68,7 +68,11 @@ impl<P, M> Trials<P, M> {
     /// Push the trial to the collection.
     ///
     /// **Repetitive parameters will be ignored.**
-    pub fn insert(&mut self, trial: Trial<P, M>)
+    ///
+    /// # Returns
+    ///
+    /// [`true`], if the trial was inserted, and [`false`] if it was ignored as repetitive.
+    pub fn insert(&mut self, trial: Trial<P, M>) -> bool
     where
         P: Copy + Ord,
         M: Ord,
@@ -76,6 +80,9 @@ impl<P, M> Trials<P, M> {
         if self.by_parameter.insert(trial.parameter) {
             assert!(self.by_metric.insert(trial));
             assert_eq!(self.by_parameter.len(), self.by_metric.len());
+            true
+        } else {
+            false
         }
     }
 
@@ -157,19 +164,24 @@ mod tests {
     fn trials_ok() {
         let mut trials = Trials::new();
 
-        trials.insert(Trial {
+        assert!(trials.insert(Trial {
             metric: 42,
             parameter: 1,
-        });
+        }));
         assert_eq!(trials.len(), 1);
         assert_eq!(trials.iter_parameters().collect::<Vec<_>>(), [1]);
 
-        trials.insert(Trial {
+        assert!(trials.insert(Trial {
             metric: 41,
             parameter: 2,
-        });
+        }));
         assert_eq!(trials.len(), 2);
         assert_eq!(trials.iter_parameters().collect::<Vec<_>>(), [1, 2]);
+
+        assert!(!trials.insert(Trial {
+            metric: 41,
+            parameter: 2,
+        }));
 
         assert_eq!(
             trials.pop_worst(),
