@@ -5,7 +5,7 @@ use std::{
 
 use crate::{kernel::Uniform, Density};
 
-/// Single Kernel Density Estimator component.
+/// Single component of a [`crate::kde::KernelDensityEstimator`].
 #[derive(Copy, Clone, Debug)]
 pub struct Component<K, T> {
     /// Kernel function.

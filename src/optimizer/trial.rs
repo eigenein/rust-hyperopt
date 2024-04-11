@@ -37,6 +37,11 @@ impl<P, M> Trials<P, M> {
     pub fn len(&self) -> usize {
         self.by_parameter.len()
     }
+
+    /// Iterate parameters of the trials in ascending order.
+    pub fn iter_parameters(&self) -> impl Iterator<Item = &P> {
+        self.by_parameter.iter()
+    }
 }
 
 impl<P: Copy + Ord, M: Ord> Trials<P, M> {
@@ -60,7 +65,7 @@ impl<P: Copy + Ord, M: Ord> Trials<P, M> {
 
 #[cfg(test)]
 mod tests {
-    use crate::optimizer::trial::Trial;
+    use crate::optimizer::trial::{Trial, Trials};
 
     #[test]
     fn ordering_ok() {
@@ -73,5 +78,34 @@ mod tests {
                 parameter: 0,
             }
         );
+    }
+
+    #[test]
+    fn trials_ok() {
+        let mut trials = Trials::new();
+
+        trials.insert(Trial {
+            metric: 42,
+            parameter: 1,
+        });
+        assert_eq!(trials.len(), 1);
+        assert_eq!(trials.iter_parameters().collect::<Vec<_>>(), [&1]);
+
+        trials.insert(Trial {
+            metric: 41,
+            parameter: 2,
+        });
+        assert_eq!(trials.len(), 2);
+        assert_eq!(trials.iter_parameters().collect::<Vec<_>>(), [&1, &2]);
+
+        assert_eq!(
+            trials.pop_worst(),
+            Some(Trial {
+                metric: 42,
+                parameter: 1
+            })
+        );
+        assert_eq!(trials.len(), 1);
+        assert_eq!(trials.iter_parameters().collect::<Vec<_>>(), [&2]);
     }
 }
