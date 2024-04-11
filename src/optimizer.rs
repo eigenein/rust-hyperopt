@@ -1,6 +1,15 @@
+use std::{
+    iter,
+    ops::{Add, Mul, RangeInclusive, Sub},
+};
+
 use crate::{
-    kde::Component,
+    iter::Triples,
+    kde::{Component, KernelDensityEstimator},
     optimizer::trial::{Trial, Trials},
+    rand::UniformRange,
+    Density,
+    Sample,
 };
 
 mod trial;
@@ -59,9 +68,7 @@ impl<R, K1, KS, P, M> Optimizer<R, K1, KS, P, M> {
         self.n_candidates = n_candidates;
         self
     }
-}
 
-impl<R, K1, KS, P: Copy + Ord, M: Ord> Optimizer<R, K1, KS, P, M> {
     /// Provide the information about the trial, or in other words, «fit» the optimizer on the sample.
     ///
     /// Normally, you'll call your target function on parameters supplied by [`Optimizer::new_trial`],
@@ -76,7 +83,11 @@ impl<R, K1, KS, P: Copy + Ord, M: Ord> Optimizer<R, K1, KS, P, M> {
         clippy::cast_precision_loss,
         clippy::cast_sign_loss
     )]
-    pub fn feed_back(&mut self, parameter: P, metric: M) {
+    pub fn feed_back(&mut self, parameter: P, metric: M)
+    where
+        P: Copy + Ord,
+        M: Ord,
+    {
         self.good_trials.insert(Trial { metric, parameter });
 
         // Balance the classes:
@@ -89,15 +100,31 @@ impl<R, K1, KS, P: Copy + Ord, M: Ord> Optimizer<R, K1, KS, P, M> {
             self.bad_trials.insert(worst_good_trial);
         }
     }
-}
 
-impl<R, K1, KS, P, M: Ord> Optimizer<R, K1, KS, P, M> {
     /// Generate a parameter value for a new trial.
     ///
     /// After evaluating the target function with this parameter,
     /// you'd better feed the metric back with [`Optimizer::feed_back`].
-    pub fn new_trial(&self) -> P {
-        // Abandon hope, all ye who enter here!
+    ///
+    /// Abandon hope, all ye who enter here!
+    pub fn new_trial<RNG>(&self, mut rng: RNG) -> P
+    where
+        K1: Copy + Density<P> + Sample<P, RNG>,
+        KS: Copy + Density<P> + Sample<P, RNG>,
+        P: Copy + Ord + Add<P, Output = P> + Mul<P, Output = P> + Sub<P, Output = P>,
+        RNG: UniformRange<RangeInclusive<usize>, usize>,
+    {
+        // Okay… Slow breath in… and out…
+        // First, construct the KDEs:
+        // TODO: I'd be happy to de-duplicate these, but the closure made me struggle to define the output type.
+        let good_kde = KernelDensityEstimator(
+            Triples::new(self.good_trials.iter_parameters())
+                .filter_map(|triple| Component::from_triple(self.kernel, triple)),
+        );
+        let bad_kde = KernelDensityEstimator(
+            Triples::new(self.bad_trials.iter_parameters())
+                .filter_map(|triple| Component::from_triple(self.kernel, triple)),
+        );
         todo!()
     }
 }

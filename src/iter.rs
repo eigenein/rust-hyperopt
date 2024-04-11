@@ -3,6 +3,7 @@ use std::fmt::Debug;
 /// Iterator over 3-tuple windows, including partial ones.
 ///
 /// It's the need for partial windows that prompted me to implement the custom iterator.
+#[derive(Copy, Clone, Debug)]
 pub struct Triples<I, T>(I, Option<T>, Option<T>, Option<T>);
 
 impl<I, T> Triples<I, T> {
@@ -34,7 +35,7 @@ where
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Triple<T> {
     Right(T),
     MiddleRight(T, T),

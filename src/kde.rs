@@ -63,6 +63,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::iter;
+
     use super::*;
     use crate::{consts::f32::SQRT_3, kernel::Uniform};
 
@@ -73,7 +75,7 @@ mod tests {
             location: 0.0,
             bandwidth: 1.0,
         };
-        let kde = KernelDensityEstimator([component].into_iter());
+        let kde = KernelDensityEstimator(iter::once(component));
         let mut rng = fastrand::Rng::new();
 
         let sample = kde.sample(&mut rng);

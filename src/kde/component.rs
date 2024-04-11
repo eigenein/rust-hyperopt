@@ -18,29 +18,29 @@ pub struct Component<K, T> {
     pub bandwidth: T,
 }
 
-impl<K, T> Component<K, T>
-where
-    T: Copy + Ord + Sub<T, Output = T>,
-{
+impl<K, T> Component<K, T> {
     /// Construct a [`Component`] from a [`Triple`] of adjacent points.
     ///
     /// Kernel should be standardized because distances to the neighbors are used as bandwidths.
-    pub fn from_triple(kernel: K, triple: Triple<T>) -> Option<Self> {
+    pub fn from_triple(kernel: K, triple: Triple<T>) -> Option<Self>
+    where
+        T: Copy + Ord + Sub<T, Output = T>,
+    {
         match triple {
             // For the middle point we take the maximum of the two distances:
-            Triple::Full(left, location, right) => Some(Component {
+            Triple::Full(left, location, right) => Some(Self {
                 kernel,
                 location,
                 bandwidth: (right - location).max(location - left),
             }),
 
-            Triple::LeftMiddle(left, location) => Some(Component {
+            Triple::LeftMiddle(left, location) => Some(Self {
                 kernel,
                 location,
                 bandwidth: location - left,
             }),
 
-            Triple::MiddleRight(location, right) => Some(Component {
+            Triple::MiddleRight(location, right) => Some(Self {
                 kernel,
                 location,
                 bandwidth: right - location,

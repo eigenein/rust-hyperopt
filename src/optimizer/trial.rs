@@ -37,18 +37,25 @@ impl<P, M> Trials<P, M> {
     pub fn len(&self) -> usize {
         self.by_parameter.len()
     }
-
-    /// Iterate parameters of the trials in ascending order.
-    pub fn iter_parameters(&self) -> impl Iterator<Item = &P> {
-        self.by_parameter.iter()
-    }
 }
 
-impl<P: Copy + Ord, M: Ord> Trials<P, M> {
+impl<P, M> Trials<P, M> {
+    /// Iterate parameters of the trials in ascending order.
+    pub fn iter_parameters(&self) -> impl Clone + Iterator<Item = P> + '_
+    where
+        P: Copy,
+    {
+        self.by_parameter.iter().copied()
+    }
+
     /// Push the trial to the collection.
     ///
     /// **Repetitive parameters will be ignored.**
-    pub fn insert(&mut self, trial: Trial<P, M>) {
+    pub fn insert(&mut self, trial: Trial<P, M>)
+    where
+        P: Copy + Ord,
+        M: Ord,
+    {
         if self.by_parameter.insert(trial.parameter) {
             assert!(self.by_metric.insert(trial));
             assert_eq!(self.by_parameter.len(), self.by_metric.len());
@@ -56,7 +63,11 @@ impl<P: Copy + Ord, M: Ord> Trials<P, M> {
     }
 
     /// Pop the worst trial.
-    pub fn pop_worst(&mut self) -> Option<Trial<P, M>> {
+    pub fn pop_worst(&mut self) -> Option<Trial<P, M>>
+    where
+        P: Ord,
+        M: Ord,
+    {
         let worst_trial = self.by_metric.pop_last()?;
         assert!(self.by_parameter.remove(&worst_trial.parameter));
         Some(worst_trial)
@@ -89,14 +100,14 @@ mod tests {
             parameter: 1,
         });
         assert_eq!(trials.len(), 1);
-        assert_eq!(trials.iter_parameters().collect::<Vec<_>>(), [&1]);
+        assert_eq!(trials.iter_parameters().collect::<Vec<_>>(), [1]);
 
         trials.insert(Trial {
             metric: 41,
             parameter: 2,
         });
         assert_eq!(trials.len(), 2);
-        assert_eq!(trials.iter_parameters().collect::<Vec<_>>(), [&1, &2]);
+        assert_eq!(trials.iter_parameters().collect::<Vec<_>>(), [1, 2]);
 
         assert_eq!(
             trials.pop_worst(),
@@ -106,6 +117,6 @@ mod tests {
             })
         );
         assert_eq!(trials.len(), 1);
-        assert_eq!(trials.iter_parameters().collect::<Vec<_>>(), [&2]);
+        assert_eq!(trials.iter_parameters().collect::<Vec<_>>(), [2]);
     }
 }
