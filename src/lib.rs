@@ -1,4 +1,5 @@
 pub mod consts;
+mod iter;
 pub mod kde;
 pub mod kernel;
 mod optimizer;

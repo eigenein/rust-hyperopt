@@ -71,11 +71,15 @@ impl<R, K1, KS, P: Copy + Ord, M: Ord> Optimizer<R, K1, KS, P, M> {
     ///
     /// - `parameter`: the target function parameter
     /// - `metric`: the target function metric
+    #[allow(
+        clippy::cast_possible_truncation,
+        clippy::cast_precision_loss,
+        clippy::cast_sign_loss
+    )]
     pub fn feed_back(&mut self, parameter: P, metric: M) {
         self.good_trials.insert(Trial { metric, parameter });
 
         // Balance the classes:
-        #[allow(clippy::cast_precision_loss)]
         let n_expected_good_trials = {
             let n_total_trials = self.good_trials.len() + self.bad_trials.len();
             (self.cutoff * n_total_trials as f64).round() as usize
