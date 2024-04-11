@@ -1,6 +1,7 @@
-use std::collections::BTreeSet;
-
-use crate::{kde::Component, optimizer::trial::Trial};
+use crate::{
+    kde::Component,
+    optimizer::trial::{Trial, Trials},
+};
 
 mod trial;
 
@@ -12,15 +13,17 @@ mod trial;
 /// - [`KS`]: kernel type of the trials, it may (and will likely) be different from the prior component
 /// - [`P`]: type of parameter that is optimized
 /// - [`M`]: value of the target function, the less – the better
-pub struct Optimizer<R, K1, P, M> {
+pub struct Optimizer<R, K1, KS, P, M> {
     range: R,
     first_component: Component<K1, P>,
+    kernel: KS,
     cutoff: f64,
     n_candidates: usize,
-    trials: BTreeSet<Trial<P, M>>,
+    good_trials: Trials<P, M>,
+    bad_trials: Trials<P, M>,
 }
 
-impl<R, K1, P, M> Optimizer<R, K1, P, M> {
+impl<R, K1, KS, P, M> Optimizer<R, K1, KS, P, M> {
     /// Construct the new optimizer.
     ///
     /// Here begins your adventure!
@@ -29,13 +32,16 @@ impl<R, K1, P, M> Optimizer<R, K1, P, M> {
     ///
     /// - `range`: parameter range
     /// - `first_component`: your prior belief about which values of the searched parameter is more optimal
-    pub const fn new(range: R, first_component: Component<K1, P>) -> Self {
+    /// - `kernel`: kernel for the trial components
+    pub const fn new(range: R, first_component: Component<K1, P>, kernel: KS) -> Self {
         Self {
             range,
             first_component,
-            trials: BTreeSet::new(),
+            kernel,
             cutoff: 0.1,
             n_candidates: 25,
+            good_trials: Trials::new(),
+            bad_trials: Trials::new(),
         }
     }
 
@@ -55,7 +61,7 @@ impl<R, K1, P, M> Optimizer<R, K1, P, M> {
     }
 }
 
-impl<R, K1, P: Ord, M: Ord> Optimizer<R, K1, P, M> {
+impl<R, K1, KS, P: Copy + Ord, M: Ord> Optimizer<R, K1, KS, P, M> {
     /// Provide the information about the trial, or in other words, «fit» the optimizer on the sample.
     ///
     /// Normally, you'll call your target function on parameters supplied by [`Optimizer::new_trial`],
@@ -66,11 +72,22 @@ impl<R, K1, P: Ord, M: Ord> Optimizer<R, K1, P, M> {
     /// - `parameter`: the target function parameter
     /// - `metric`: the target function metric
     pub fn feed_back(&mut self, parameter: P, metric: M) {
-        self.trials.insert(Trial { parameter, metric });
+        self.good_trials.insert(Trial { metric, parameter });
+
+        // Balance the classes:
+        #[allow(clippy::cast_precision_loss)]
+        let n_expected_good_trials = {
+            let n_total_trials = self.good_trials.len() + self.bad_trials.len();
+            (self.cutoff * n_total_trials as f64).round() as usize
+        };
+        while self.good_trials.len() > n_expected_good_trials {
+            let worst_good_trial = self.good_trials.pop_worst().unwrap();
+            self.bad_trials.insert(worst_good_trial);
+        }
     }
 }
 
-impl<R, K1, P, M: Ord> Optimizer<R, K1, P, M> {
+impl<R, K1, KS, P, M: Ord> Optimizer<R, K1, KS, P, M> {
     /// Generate a parameter value for a new trial.
     ///
     /// After evaluating the target function with this parameter,
