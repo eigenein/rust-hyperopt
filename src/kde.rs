@@ -17,7 +17,7 @@ pub struct KernelDensityEstimator<C>(pub C);
 
 impl<T, C> Density<T> for KernelDensityEstimator<C>
 where
-    T: Copy + From<usize> + num_traits::Num,
+    T: Copy + num_traits::FromPrimitive + num_traits::Num,
     C: Iterator + Clone,
     C::Item: Density<T>,
 {
@@ -34,7 +34,7 @@ where
         if n_points == 0 {
             T::zero()
         } else {
-            sum / n_points.into()
+            sum / T::from_usize(n_points).unwrap()
         }
     }
 }
@@ -72,7 +72,7 @@ mod tests {
     use std::iter;
 
     use super::*;
-    use crate::{consts::f32::SQRT_3, kernel::Uniform};
+    use crate::{consts::f64::SQRT_3, kernel::Uniform};
 
     #[test]
     fn sample_single_component_ok() {

@@ -31,6 +31,7 @@ pub struct Trial<P, M> {
 /// All this is for the sake of insertion and removal in `O(log n)` time.
 ///
 /// The optimizer **should not** try the same parameter twice.
+#[derive(Debug)]
 pub struct Trials<P, M> {
     by_metric: BTreeSet<Trial<P, M>>,
     by_parameter: BTreeSet<P>,
@@ -43,10 +44,6 @@ impl<P, M> Trials<P, M> {
             by_metric: BTreeSet::new(),
             by_parameter: BTreeSet::new(),
         }
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.by_parameter.is_empty()
     }
 
     pub fn len(&self) -> usize {
@@ -80,6 +77,35 @@ impl<P, M> Trials<P, M> {
             assert!(self.by_metric.insert(trial));
             assert_eq!(self.by_parameter.len(), self.by_metric.len());
         }
+    }
+
+    /// Retrieve the best trial.
+    pub fn best(&self) -> Option<&Trial<P, M>>
+    where
+        P: Ord,
+        M: Ord,
+    {
+        self.by_metric.first()
+    }
+
+    /// Retrieve the worst trial.
+    pub fn worst(&self) -> Option<&Trial<P, M>>
+    where
+        P: Ord,
+        M: Ord,
+    {
+        self.by_metric.last()
+    }
+
+    /// Pop the best trial.
+    pub fn pop_best(&mut self) -> Option<Trial<P, M>>
+    where
+        P: Ord,
+        M: Ord,
+    {
+        let best_trial = self.by_metric.pop_first()?;
+        assert!(self.by_parameter.remove(&best_trial.parameter));
+        Some(best_trial)
     }
 
     /// Pop the worst trial.

@@ -1,4 +1,8 @@
-use crate::kernel::{Density, Sample};
+use crate::{
+    consts::f64::SQRT_5,
+    kernel::{Density, Sample},
+    rand::Rand,
+};
 
 /// [Standardized][1] Epanechnikov (parabolic) kernel.
 ///
@@ -6,56 +10,42 @@ use crate::kernel::{Density, Sample};
 #[derive(Copy, Clone, Debug)]
 pub struct Epanechnikov;
 
-macro_rules! impl_kernel {
-    ($type:ty, $normalization:expr) => {
-        impl Density<$type> for Epanechnikov {
-            fn density(&self, at: $type) -> $type {
-                // Scale to `-1..1`:
-                let at = at / $normalization;
+impl<T: num_traits::Float> Density<T> for Epanechnikov {
+    fn density(&self, at: T) -> T {
+        // Scale to `-1..1`:
+        let at = at / T::from(SQRT_5).unwrap();
 
-                // Calculate the density and normalize:
-                0.75 / $normalization * at.mul_add(-at, 1.0)
-            }
-        }
-
-        impl<RNG> Sample<$type, RNG> for Epanechnikov
-        where
-            RNG: crate::rand::Uniform<$type> + crate::rand::Uniform<bool>,
-        {
-            /// [Generate a sample][1] from the Epanechnikov kernel.
-            ///
-            /// [1]: https://stats.stackexchange.com/questions/173637/generating-a-sample-from-epanechnikovs-kernel
-            fn sample(&self, rng: &mut RNG) -> $type {
-                // Select the two smallest numbers of the three iid uniform samples:
-                let (x1, x2) = min_2(
-                    crate::rand::Uniform::uniform(rng),
-                    crate::rand::Uniform::uniform(rng),
-                    crate::rand::Uniform::uniform(rng),
-                );
-
-                // Randomly select one of the two smallest numbers:
-                let x = if crate::rand::Uniform::<bool>::uniform(rng) {
-                    x1
-                } else {
-                    x2
-                };
-
-                // Randomly invert it:
-                let x: $type = if crate::rand::Uniform::<bool>::uniform(rng) {
-                    x
-                } else {
-                    -x
-                };
-
-                // Scale to have a standard deviation of 1:
-                x * $normalization
-            }
-        }
-    };
+        // Calculate the density and normalize:
+        T::from(0.75).unwrap() / T::from(SQRT_5).unwrap() * at.mul_add(-at, T::one())
+    }
 }
 
-impl_kernel!(f32, crate::consts::f32::SQRT_5);
-impl_kernel!(f64, crate::consts::f64::SQRT_5);
+impl<T, RNG> Sample<T, RNG> for Epanechnikov
+where
+    T: num_traits::Float,
+    RNG: Rand<f64> + Rand<bool>,
+{
+    /// [Generate a sample][1] from the Epanechnikov kernel.
+    ///
+    /// [1]: https://stats.stackexchange.com/questions/173637/generating-a-sample-from-epanechnikovs-kernel
+    fn sample(&self, rng: &mut RNG) -> T {
+        // Select the two smallest numbers of the three iid uniform samples:
+        let (x1, x2) = min_2(
+            T::from(Rand::<f64>::uniform(rng)).unwrap(),
+            T::from(Rand::<f64>::uniform(rng)).unwrap(),
+            T::from(Rand::<f64>::uniform(rng)).unwrap(),
+        );
+
+        // Randomly select one of the two smallest numbers:
+        let x: T = if Rand::<bool>::uniform(rng) { x1 } else { x2 };
+
+        // Randomly invert it:
+        let x = if Rand::<bool>::uniform(rng) { x } else { -x };
+
+        // Scale to have a standard deviation of 1:
+        x * T::from(SQRT_5).unwrap()
+    }
+}
 
 /// Pick and return the two smallest numbers.
 fn min_2<T: PartialOrd>(mut x1: T, mut x2: T, x3: T) -> (T, T) {
