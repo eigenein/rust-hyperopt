@@ -15,21 +15,21 @@ mod trial;
 ///
 /// # Generic parameters
 ///
-/// - [`K1`]: kernel type of the first (prior) estimator component
-/// - [`KS`]: kernel type of the trials, it may (and will likely) be different from the prior component
+/// - [`KFirst`]: kernel type of the first (prior) estimator component
+/// - [`K`]: kernel type of the trials, it may (and will likely) be different from the prior component
 /// - [`P`]: type of parameter that is optimized
 /// - [`M`]: value of the target function, the less – the better
-pub struct Optimizer<R, K1, KS, P, M> {
+pub struct Optimizer<R, KFirst, K, P, M> {
     range: R,
-    first_component: Component<K1, P>,
-    kernel: KS,
+    first_component: Component<KFirst, P>,
+    kernel: K,
     cutoff: f64,
     n_candidates: usize,
     good_trials: Trials<P, M>,
     bad_trials: Trials<P, M>,
 }
 
-impl<R, K1, KS, P, M> Optimizer<R, K1, KS, P, M> {
+impl<R, KFirst, K, P, M> Optimizer<R, KFirst, K, P, M> {
     /// Construct the new optimizer.
     ///
     /// Here begins your adventure!
@@ -39,7 +39,7 @@ impl<R, K1, KS, P, M> Optimizer<R, K1, KS, P, M> {
     /// - `range`: parameter range
     /// - `first_component`: your prior belief about which values of the searched parameter is more optimal
     /// - `kernel`: kernel for the trial components
-    pub const fn new(range: R, first_component: Component<K1, P>, kernel: KS) -> Self {
+    pub const fn new(range: R, first_component: Component<KFirst, P>, kernel: K) -> Self {
         Self {
             range,
             first_component,
@@ -104,24 +104,17 @@ impl<R, K1, KS, P, M> Optimizer<R, K1, KS, P, M> {
     /// you'd better feed the metric back with [`Optimizer::feed_back`].
     ///
     /// Abandon hope, all ye who enter here!
-    pub fn new_trial<RNG>(&self, mut rng: RNG) -> P
+    pub fn new_trial<Rng>(&self, mut rng: Rng) -> P
     where
-        K1: Copy + Density<P> + Sample<P, RNG>,
-        KS: Copy + Density<P> + Sample<P, RNG>,
+        KFirst: Copy + Density<P> + Sample<P, Rng>,
+        K: Copy + Density<P> + Sample<P, Rng>,
         P: Copy + Ord + Add<P, Output = P> + Mul<P, Output = P> + Sub<P, Output = P>,
-        RNG: UniformRange<RangeInclusive<usize>, usize>,
+        Rng: UniformRange<RangeInclusive<usize>, usize>,
     {
         // Okay… Slow breath in… and out…
         // First, construct the KDEs:
-        // TODO: I'd be happy to de-duplicate these, but the closure made me struggle to define the output type.
-        let good_kde = KernelDensityEstimator(
-            Triples::new(self.good_trials.iter_parameters())
-                .filter_map(|triple| Component::from_triple(self.kernel, triple)),
-        );
-        let bad_kde = KernelDensityEstimator(
-            Triples::new(self.bad_trials.iter_parameters())
-                .filter_map(|triple| Component::from_triple(self.kernel, triple)),
-        );
+        let good_kde = self.good_trials.to_kde(self.kernel);
+        let bad_kde = self.bad_trials.to_kde(self.kernel);
         todo!()
     }
 }

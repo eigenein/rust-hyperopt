@@ -1,4 +1,15 @@
-use std::{collections::BTreeSet, fmt::Debug};
+use std::{
+    collections::{btree_set::Iter, BTreeSet},
+    fmt::Debug,
+    iter,
+    iter::Copied,
+    ops::Sub,
+};
+
+use crate::{
+    iter::Triples,
+    kde::{Component, KernelDensityEstimator},
+};
 
 /// Single trial in the optimizer.
 ///
@@ -41,7 +52,7 @@ impl<P, M> Trials<P, M> {
 
 impl<P, M> Trials<P, M> {
     /// Iterate parameters of the trials in ascending order.
-    pub fn iter_parameters(&self) -> impl Clone + Iterator<Item = P> + '_
+    pub fn iter_parameters(&self) -> Copied<Iter<P>>
     where
         P: Copy,
     {
@@ -71,6 +82,22 @@ impl<P, M> Trials<P, M> {
         let worst_trial = self.by_metric.pop_last()?;
         assert!(self.by_parameter.remove(&worst_trial.parameter));
         Some(worst_trial)
+    }
+
+    /// Construct a [`KernelDensityEstimator`] from the trials.
+    pub fn to_kde<'a, K>(
+        &'a self,
+        kernel: K,
+    ) -> KernelDensityEstimator<impl Iterator<Item = Component<K, P>> + 'a>
+    where
+        P: Copy + Ord + Sub<P, Output = P>,
+        K: Copy + 'a,
+    {
+        KernelDensityEstimator(
+            iter::repeat(kernel)
+                .zip(Triples::new(self.iter_parameters()))
+                .filter_map(|(kernel, triple)| Component::from_triple(kernel, triple)),
+        )
     }
 }
 
