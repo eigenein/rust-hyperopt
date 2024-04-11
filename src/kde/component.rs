@@ -1,9 +1,9 @@
 use std::{
     collections::Bound,
-    ops::{Div, RangeBounds, Sub},
+    ops::{Add, Div, Mul, RangeBounds, Sub},
 };
 
-use crate::{iter::Triple, kernel::Uniform, Density};
+use crate::{iter::Triple, kernel::Uniform, Density, Sample};
 
 /// Single component of a [`crate::kde::KernelDensityEstimator`].
 #[derive(Copy, Clone, Debug)]
@@ -58,6 +58,16 @@ where
 {
     fn density(&self, at: T) -> T {
         self.kernel.density((at - self.location) / self.bandwidth) / self.bandwidth
+    }
+}
+
+impl<K, T, Rng> Sample<T, Rng> for Component<K, T>
+where
+    K: Sample<T, Rng>,
+    T: Copy + Add<T, Output = T> + Mul<T, Output = T>,
+{
+    fn sample(&self, rng: &mut Rng) -> T {
+        self.kernel.sample(rng) * self.bandwidth + self.location
     }
 }
 

@@ -1,7 +1,4 @@
-use std::{
-    iter,
-    ops::{Add, Mul, RangeInclusive, Sub},
-};
+use std::ops::{Add, Mul, RangeInclusive, Sub};
 
 use crate::{
     iter::Triples,

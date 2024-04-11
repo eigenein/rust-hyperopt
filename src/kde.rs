@@ -7,15 +7,19 @@ mod component;
 
 /// [Kernel density estimator][1].
 ///
+/// # Type parameters
+///
+/// - [`C`]: iterator of KDE's components that are [`Density`] and [`Sample`].
+///
 /// [1]: https://en.wikipedia.org/wiki/Kernel_density_estimation
 #[derive(Copy, Clone, Debug)]
 pub struct KernelDensityEstimator<C>(pub C);
 
-impl<T, C, K> Density<T> for KernelDensityEstimator<C>
+impl<T, C> Density<T> for KernelDensityEstimator<C>
 where
     T: Copy + Div<T, Output = T> + Mul<T, Output = T> + Sub<T, Output = T> + num_traits::Zero,
-    C: Iterator<Item = Component<K, T>> + Clone,
-    K: Density<T>,
+    C: Iterator + Clone,
+    C::Item: Density<T>,
     usize: Into<T>,
 {
     /// Calculate the KDE's density at the specified point.
@@ -30,12 +34,12 @@ where
     }
 }
 
-impl<T, C, K, RNG> Sample<T, RNG> for KernelDensityEstimator<C>
+impl<T, C, Rng> Sample<T, Rng> for KernelDensityEstimator<C>
 where
     T: Add<T, Output = T> + Mul<T, Output = T>,
-    C: Iterator<Item = Component<K, T>> + Clone,
-    RNG: UniformRange<RangeInclusive<usize>, usize>,
-    K: Sample<T, RNG>,
+    C: Iterator + Clone,
+    C::Item: Sample<T, Rng>,
+    Rng: UniformRange<RangeInclusive<usize>, usize>,
 {
     /// Sample a random point from the KDE.
     ///
@@ -47,17 +51,15 @@ where
     /// # Panics
     ///
     /// This method panics if called on an empty estimator.
-    fn sample(&self, rng: &mut RNG) -> T {
-        let component = self
-            .0
+    fn sample(&self, rng: &mut Rng) -> T {
+        self.0
             .clone()
             .enumerate()
             .filter(|(i, _)| rng.uniform_range(0..=*i) == 0)
             .last()
             .expect("KDE must have at least one component")
-            .1;
-
-        component.kernel.sample(rng) * component.bandwidth + component.location
+            .1
+            .sample(rng)
     }
 }
 
