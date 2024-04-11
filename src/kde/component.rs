@@ -3,7 +3,7 @@ use std::{
     ops::{Div, RangeBounds, Sub},
 };
 
-use crate::{kernel::Uniform, Density};
+use crate::{iter::Triple, kernel::Uniform, Density};
 
 /// Single component of a [`crate::kde::KernelDensityEstimator`].
 #[derive(Copy, Clone, Debug)]
@@ -16,6 +16,39 @@ pub struct Component<K, T> {
 
     /// Bandwidth of the corresponding kernel.
     pub bandwidth: T,
+}
+
+impl<K, T> Component<K, T>
+where
+    T: Copy + Ord + Sub<T, Output = T>,
+{
+    /// Construct a [`Component`] from a [`Triple`] of adjacent points.
+    ///
+    /// Kernel should be standardized because distances to the neighbors are used as bandwidths.
+    pub fn from_triple(kernel: K, triple: Triple<T>) -> Option<Self> {
+        match triple {
+            // For the middle point we take the maximum of the two distances:
+            Triple::Full(left, location, right) => Some(Component {
+                kernel,
+                location,
+                bandwidth: (right - location).max(location - left),
+            }),
+
+            Triple::LeftMiddle(left, location) => Some(Component {
+                kernel,
+                location,
+                bandwidth: location - left,
+            }),
+
+            Triple::MiddleRight(location, right) => Some(Component {
+                kernel,
+                location,
+                bandwidth: right - location,
+            }),
+
+            _ => None,
+        }
+    }
 }
 
 impl<K, T> Density<T> for Component<K, T>

@@ -14,7 +14,7 @@ impl<I, T> Triples<I, T> {
 impl<I, T> Iterator for Triples<I, T>
 where
     I: Iterator<Item = T>,
-    T: Copy + Debug,
+    T: Copy,
 {
     type Item = Triple<T>;
 
@@ -29,19 +29,19 @@ where
             (None, Some(middle), Some(right)) => Some(Triple::MiddleRight(middle, right)),
             (None, None, Some(right)) => Some(Triple::Right(right)),
             (None, None, None) => None,
-            state => panic!("invalid inner state: {state:?}"),
+            _ => unreachable!(),
         }
     }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Triple<T> {
-    Left(T),
-    LeftMiddle(T, T),
-    Middle(T),
-    Full(T, T, T),
-    MiddleRight(T, T),
     Right(T),
+    MiddleRight(T, T),
+    Full(T, T, T),
+    LeftMiddle(T, T),
+    Left(T),
+    Middle(T),
 }
 
 #[cfg(test)]
@@ -76,7 +76,13 @@ mod tests {
     fn three_ok() {
         assert_eq!(
             Triples::new([1, 2, 3].into_iter()).collect::<Vec<_>>(),
-            [Right(1), MiddleRight(1, 2), Full(1, 2, 3), LeftMiddle(2, 3), Left(3)]
+            [
+                Right(1),
+                MiddleRight(1, 2),
+                Full(1, 2, 3),
+                LeftMiddle(2, 3),
+                Left(3)
+            ]
         );
     }
 }

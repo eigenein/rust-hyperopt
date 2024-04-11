@@ -1,20 +1,20 @@
-mod component;
-
 use std::ops::{Add, Div, Mul, RangeInclusive, Sub};
 
 pub use self::component::Component;
 use crate::{rand::UniformRange, Density, Sample};
 
+mod component;
+
 /// [Kernel density estimator][1].
 ///
 /// [1]: https://en.wikipedia.org/wiki/Kernel_density_estimation
 #[derive(Copy, Clone, Debug)]
-pub struct KernelDensityEstimator<I>(pub I);
+pub struct KernelDensityEstimator<C>(pub C);
 
-impl<T, I, K> Density<T> for KernelDensityEstimator<I>
+impl<T, C, K> Density<T> for KernelDensityEstimator<C>
 where
     T: Copy + Div<T, Output = T> + Mul<T, Output = T> + Sub<T, Output = T> + num_traits::Zero,
-    I: IntoIterator<Item = Component<K, T>> + Copy,
+    C: IntoIterator<Item = Component<K, T>> + Copy,
     K: Density<T>,
     usize: Into<T>,
 {
@@ -30,10 +30,10 @@ where
     }
 }
 
-impl<T, I, K, RNG> Sample<T, RNG> for KernelDensityEstimator<I>
+impl<T, C, K, RNG> Sample<T, RNG> for KernelDensityEstimator<C>
 where
     T: Add<T, Output = T> + Mul<T, Output = T>,
-    I: IntoIterator<Item = Component<K, T>> + Copy,
+    C: IntoIterator<Item = Component<K, T>> + Copy,
     RNG: UniformRange<RangeInclusive<usize>, usize>,
     K: Sample<T, RNG>,
 {
