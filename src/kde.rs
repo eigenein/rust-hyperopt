@@ -34,7 +34,7 @@ where
     }
 }
 
-impl<T, C, Rng> Sample<T, Rng> for KernelDensityEstimator<C>
+impl<T, C, Rng> Sample<Option<T>, Rng> for KernelDensityEstimator<C>
 where
     T: Add<T, Output = T> + Mul<T, Output = T>,
     C: Iterator + Clone,
@@ -46,20 +46,19 @@ where
     /// The algorithm uses «[reservoir sampling][1]» to pick a random component,
     /// and then samples a point from that component.
     ///
+    /// The method returns [`None`], if the estimator has no components.
+    ///
     /// [1]: https://en.wikipedia.org/wiki/Reservoir_sampling
-    ///
-    /// # Panics
-    ///
-    /// This method panics if called on an empty estimator.
-    fn sample(&self, rng: &mut Rng) -> T {
-        self.0
+    fn sample(&self, rng: &mut Rng) -> Option<T> {
+        let sample = self
+            .0
             .clone()
             .enumerate()
             .filter(|(i, _)| rng.uniform_range(0..=*i) == 0)
-            .last()
-            .expect("KDE must have at least one component")
+            .last()?
             .1
-            .sample(rng)
+            .sample(rng);
+        Some(sample)
     }
 }
 
@@ -80,10 +79,10 @@ mod tests {
         let kde = KernelDensityEstimator(iter::once(component));
         let mut rng = fastrand::Rng::new();
 
-        let sample = kde.sample(&mut rng);
+        let sample = kde.sample(&mut rng).unwrap();
         assert!((-SQRT_3..=SQRT_3).contains(&sample));
 
         // Ensure that the iterator can be reused.
-        let _ = kde.sample(&mut rng);
+        let _ = kde.sample(&mut rng).unwrap();
     }
 }
