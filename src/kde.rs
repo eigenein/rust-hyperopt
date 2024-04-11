@@ -14,7 +14,7 @@ pub struct KernelDensityEstimator<C>(pub C);
 impl<T, C, K> Density<T> for KernelDensityEstimator<C>
 where
     T: Copy + Div<T, Output = T> + Mul<T, Output = T> + Sub<T, Output = T> + num_traits::Zero,
-    C: IntoIterator<Item = Component<K, T>> + Copy,
+    C: Iterator<Item = Component<K, T>> + Clone,
     K: Density<T>,
     usize: Into<T>,
 {
@@ -22,7 +22,7 @@ where
     fn density(&self, at: T) -> T {
         let (n_points, sum) = self
             .0
-            .into_iter()
+            .clone()
             .fold((0_usize, T::zero()), |(n, sum), component| {
                 (n + 1, sum + component.density(at))
             });
@@ -33,7 +33,7 @@ where
 impl<T, C, K, RNG> Sample<T, RNG> for KernelDensityEstimator<C>
 where
     T: Add<T, Output = T> + Mul<T, Output = T>,
-    C: IntoIterator<Item = Component<K, T>> + Copy,
+    C: Iterator<Item = Component<K, T>> + Clone,
     RNG: UniformRange<RangeInclusive<usize>, usize>,
     K: Sample<T, RNG>,
 {
@@ -50,7 +50,7 @@ where
     fn sample(&self, rng: &mut RNG) -> T {
         let component = self
             .0
-            .into_iter()
+            .clone()
             .enumerate()
             .filter(|(i, _)| rng.uniform_range(0..=*i) == 0)
             .last()
@@ -73,7 +73,13 @@ mod tests {
             location: 0.0,
             bandwidth: 1.0,
         };
-        let sample = KernelDensityEstimator([component]).sample(&mut fastrand::Rng::new());
+        let kde = KernelDensityEstimator([component].into_iter());
+        let mut rng = fastrand::Rng::new();
+
+        let sample = kde.sample(&mut rng);
         assert!((-SQRT_3..=SQRT_3).contains(&sample));
+
+        // Ensure that the iterator can be reused.
+        let _ = kde.sample(&mut rng);
     }
 }
