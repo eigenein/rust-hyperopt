@@ -45,12 +45,21 @@ impl<P, M> Trials<P, M> {
         }
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.by_parameter.is_empty()
+    }
+
     pub fn len(&self) -> usize {
         self.by_parameter.len()
     }
-}
 
-impl<P, M> Trials<P, M> {
+    pub fn contains(&self, parameter: &P) -> bool
+    where
+        P: Ord,
+    {
+        self.by_parameter.contains(parameter)
+    }
+
     /// Iterate parameters of the trials in ascending order.
     pub fn iter_parameters(&self) -> Copied<Iter<P>>
     where
@@ -88,7 +97,7 @@ impl<P, M> Trials<P, M> {
     pub fn to_kde<'a, K>(
         &'a self,
         kernel: K,
-    ) -> KernelDensityEstimator<impl Iterator<Item = Component<K, P>> + 'a>
+    ) -> KernelDensityEstimator<impl Iterator<Item = Component<K, P>> + Clone + 'a>
     where
         P: Copy + Ord + Sub<P, Output = P>,
         K: Copy + 'a,

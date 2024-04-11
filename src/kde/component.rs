@@ -1,6 +1,6 @@
 use std::{
     collections::Bound,
-    ops::{Add, Div, Mul, RangeBounds, Sub},
+    ops::{RangeBounds, Sub},
 };
 
 use crate::{iter::Triple, kernel::Uniform, Density, Sample};
@@ -54,7 +54,7 @@ impl<K, T> Component<K, T> {
 impl<K, T> Density<T> for Component<K, T>
 where
     K: Density<T>,
-    T: Copy + Div<T, Output = T> + Sub<T, Output = T>,
+    T: Copy + num_traits::Num,
 {
     fn density(&self, at: T) -> T {
         self.kernel.density((at - self.location) / self.bandwidth) / self.bandwidth
@@ -64,7 +64,7 @@ where
 impl<K, T, Rng> Sample<T, Rng> for Component<K, T>
 where
     K: Sample<T, Rng>,
-    T: Copy + Add<T, Output = T> + Mul<T, Output = T>,
+    T: Copy + num_traits::Num,
 {
     fn sample(&self, rng: &mut Rng) -> T {
         self.kernel.sample(rng) * self.bandwidth + self.location

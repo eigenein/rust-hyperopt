@@ -1,4 +1,4 @@
-use std::ops::{Add, Div, Mul, RangeInclusive, Sub};
+use std::ops::RangeInclusive;
 
 pub use self::component::Component;
 use crate::{rand::UniformRange, Density, Sample};
@@ -17,12 +17,13 @@ pub struct KernelDensityEstimator<C>(pub C);
 
 impl<T, C> Density<T> for KernelDensityEstimator<C>
 where
-    T: Copy + Div<T, Output = T> + Mul<T, Output = T> + Sub<T, Output = T> + num_traits::Zero,
+    T: Copy + From<usize> + num_traits::Num,
     C: Iterator + Clone,
     C::Item: Density<T>,
-    usize: Into<T>,
 {
     /// Calculate the KDE's density at the specified point.
+    ///
+    /// The method returns [`T::zero()`], if there are no components.
     fn density(&self, at: T) -> T {
         let (n_points, sum) = self
             .0
@@ -30,13 +31,17 @@ where
             .fold((0_usize, T::zero()), |(n, sum), component| {
                 (n + 1, sum + component.density(at))
             });
-        sum / n_points.into()
+        if n_points == 0 {
+            T::zero()
+        } else {
+            sum / n_points.into()
+        }
     }
 }
 
 impl<T, C, Rng> Sample<Option<T>, Rng> for KernelDensityEstimator<C>
 where
-    T: Add<T, Output = T> + Mul<T, Output = T>,
+    T: num_traits::Num,
     C: Iterator + Clone,
     C::Item: Sample<T, Rng>,
     Rng: UniformRange<RangeInclusive<usize>, usize>,

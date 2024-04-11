@@ -1,8 +1,7 @@
-use std::ops::{Add, Mul, RangeInclusive, Sub};
+use std::{iter, ops::RangeInclusive};
 
 use crate::{
-    iter::Triples,
-    kde::{Component, KernelDensityEstimator},
+    kde::Component,
     optimizer::trial::{Trial, Trials},
     rand::UniformRange,
     Density,
@@ -15,13 +14,13 @@ mod trial;
 ///
 /// # Generic parameters
 ///
-/// - [`KFirst`]: kernel type of the first (prior) estimator component
+/// - [`KInit`]: kernel type of the initial (prior) estimator component
 /// - [`K`]: kernel type of the trials, it may (and will likely) be different from the prior component
 /// - [`P`]: type of parameter that is optimized
 /// - [`M`]: value of the target function, the less – the better
-pub struct Optimizer<R, KFirst, K, P, M> {
+pub struct Optimizer<R, KInit, K, P, M> {
     range: R,
-    first_component: Component<KFirst, P>,
+    init_component: Component<KInit, P>,
     kernel: K,
     cutoff: f64,
     n_candidates: usize,
@@ -37,12 +36,12 @@ impl<R, KFirst, K, P, M> Optimizer<R, KFirst, K, P, M> {
     /// # Parameters
     ///
     /// - `range`: parameter range
-    /// - `first_component`: your prior belief about which values of the searched parameter is more optimal
+    /// - `init_component`: your prior belief about which values of the searched parameter is more optimal
     /// - `kernel`: kernel for the trial components
-    pub const fn new(range: R, first_component: Component<KFirst, P>, kernel: K) -> Self {
+    pub const fn new(range: R, init_component: Component<KFirst, P>, kernel: K) -> Self {
         Self {
             range,
-            first_component,
+            init_component,
             kernel,
             cutoff: 0.1,
             n_candidates: 25,
@@ -108,13 +107,50 @@ impl<R, KFirst, K, P, M> Optimizer<R, KFirst, K, P, M> {
     where
         KFirst: Copy + Density<P> + Sample<P, Rng>,
         K: Copy + Density<P> + Sample<P, Rng>,
-        P: Copy + Ord + Add<P, Output = P> + Mul<P, Output = P> + Sub<P, Output = P>,
+        P: Copy + Ord + From<usize> + num_traits::Num,
         Rng: UniformRange<RangeInclusive<usize>, usize>,
     {
         // Okay… Slow breath in… and out…
         // First, construct the KDEs:
         let good_kde = self.good_trials.to_kde(self.kernel);
         let bad_kde = self.bad_trials.to_kde(self.kernel);
-        todo!()
+
+        // Now, sample candidates:
+        let candidates = iter::from_fn(|| {
+            if self.good_trials.is_empty() || rng.uniform_range(0..=self.good_trials.len()) == 0 {
+                // Select from the first component, if the good KDE is empty or with probability `1 / (n + 1)`.
+                Some(self.init_component.sample(&mut rng))
+            } else {
+                // Select normally from the good KDE:
+                Some(
+                    good_kde
+                        .sample(&mut rng)
+                        .expect("non-empty KDE should return a sample"),
+                )
+            }
+        });
+        // Filter out tried ones:
+        let new_candidates = candidates
+            .filter(|parameter| !self.good_trials.contains(parameter))
+            .filter(|parameter| !self.bad_trials.contains(parameter));
+        // Calculate the acquisition function:
+        let evaluated_candidates = new_candidates
+            .map(|parameter| {
+                // Use weighted average of the initial component and KDE:
+                let init_density = self.init_component.density(parameter);
+                let l = (init_density
+                    + good_kde.density(parameter) * P::from(self.good_trials.len()))
+                    / P::from(self.good_trials.len() + 1);
+                let g = (init_density
+                    + bad_kde.density(parameter) * P::from(self.bad_trials.len()))
+                    / P::from(self.bad_trials.len() + 1);
+                (parameter, l / g)
+            })
+            .take(self.n_candidates);
+        // Take the best one by the acquisition function value:
+        evaluated_candidates
+            .max_by_key(|(_, acquisition)| *acquisition)
+            .expect("there should be at least one candidate")
+            .0
     }
 }
