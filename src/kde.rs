@@ -31,6 +31,7 @@ where
     /// Calculate the KDE's density at the specified point.
     ///
     /// The method returns [`P::zero()`], if there are no components.
+    #[allow(clippy::cast_precision_loss)]
     fn density(&self, at: P) -> D {
         let (n_points, sum) = self
             .0

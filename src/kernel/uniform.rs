@@ -1,4 +1,5 @@
 use std::ops::{Add, Mul};
+
 use fastrand::Rng;
 
 use crate::{
@@ -33,6 +34,6 @@ where
 {
     /// Generate a sample from the uniform kernel.
     fn sample(&self, rng: &mut Rng) -> P {
-        (rng.f64() * DOUBLE_SQRT_3 - SQRT_3).unsafe_into()
+        (rng.f64().mul_add(DOUBLE_SQRT_3, -SQRT_3)).unsafe_into()
     }
 }

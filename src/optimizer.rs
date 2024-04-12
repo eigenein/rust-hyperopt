@@ -142,7 +142,7 @@ impl<KFirst, K, P, M> Optimizer<KFirst, K, P, M> {
     /// # Type parameters
     ///
     /// - [`D`]: kernel density type
-    #[allow(clippy::missing_panics_doc)]
+    #[allow(clippy::cast_precision_loss, clippy::missing_panics_doc)]
     pub fn new_trial<D>(&self, rng: &mut Rng) -> P
     where
         KFirst: Copy + Density<P, D> + Sample<P>,
@@ -175,13 +175,16 @@ impl<KFirst, K, P, M> Optimizer<KFirst, K, P, M> {
                 Some(good_kde.sample(rng).expect("KDE should return a sample"))
             }
         });
+
         // Clamp them to the bounds:
         let valid_candidates =
             candidates.map(|parameter| num_traits::clamp(parameter, self.min, self.max));
+
         // Filter out tried ones:
         let new_candidates = valid_candidates
             .filter(|parameter| !self.good_trials.contains(parameter))
             .filter(|parameter| !self.bad_trials.contains(parameter));
+
         // Calculate the acquisition function:
         let evaluated_candidates = new_candidates
             .map(|parameter| {
@@ -196,6 +199,7 @@ impl<KFirst, K, P, M> Optimizer<KFirst, K, P, M> {
                 (parameter, l / g)
             })
             .take(self.n_candidates);
+
         // Take the best one by the acquisition function value:
         evaluated_candidates
             .max_by_key(|(_, acquisition)| *acquisition)
