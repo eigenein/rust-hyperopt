@@ -1,6 +1,6 @@
 #![allow(clippy::excessive_precision, clippy::unreadable_literal)]
 
-/// `1 / sqrt(2π)`
+/// 1 / sqrt(2π)
 pub const FRAC_1_SQRT_TAU: f64 =
     0.3989422804014326779399460599343818684758586311649346576659258296_f64;
 

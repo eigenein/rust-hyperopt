@@ -9,7 +9,7 @@ name = "hyperopt"
 publish = true
 readme = "README.md"
 repository = "https://github.com/eigenein/rust-hyperopt"
-version = "0.0.1"
+version = "0.0.2"
 
 [lib]
 

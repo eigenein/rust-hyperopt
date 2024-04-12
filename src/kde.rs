@@ -1,3 +1,5 @@
+//! Kernel density estimator implementation.
+
 use std::{
     fmt::Debug,
     ops::{Add, Div},
@@ -11,6 +13,8 @@ use crate::{convert::UnsafeFromPrimitive, Density, Sample};
 mod component;
 
 /// [Kernel density estimator][1].
+///
+/// It is used to model «good» and «bad» parameter distributions, but can also be used standalone.
 ///
 /// # Type parameters
 ///

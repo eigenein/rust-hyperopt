@@ -36,7 +36,7 @@ pub struct Optimizer<KInit, K, P, M> {
     bad_trials: Trials<P, M>,
 }
 
-impl<KFirst, K, P, M> Optimizer<KFirst, K, P, M> {
+impl<KInit, K, P, M> Optimizer<KInit, K, P, M> {
     /// Construct the new optimizer.
     ///
     /// Here begins your adventure!
@@ -46,7 +46,7 @@ impl<KFirst, K, P, M> Optimizer<KFirst, K, P, M> {
     /// - `min` and `max`: parameter range, bounds are **included**
     /// - `init_component`: your prior belief about which values of the searched parameter is more optimal
     /// - `kernel`: kernel for the trial components
-    pub const fn new(min: P, max: P, init_component: Component<KFirst, P>, kernel: K) -> Self {
+    pub const fn new(min: P, max: P, init_component: Component<KInit, P>, kernel: K) -> Self {
         Self {
             min,
             max,
@@ -151,7 +151,7 @@ impl<KFirst, K, P, M> Optimizer<KFirst, K, P, M> {
     #[allow(clippy::cast_precision_loss, clippy::missing_panics_doc)]
     pub fn new_trial<D>(&self, rng: &mut Rng) -> P
     where
-        KFirst: Copy + Density<P, D> + Sample<P>,
+        KInit: Copy + Density<P, D> + Sample<P>,
         K: Copy + Density<P, D> + Sample<P>,
         P: Add<Output = P>
             + Copy

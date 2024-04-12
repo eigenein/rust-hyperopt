@@ -1,27 +1,34 @@
+//! Different [kernels][1] for [`crate::kde::KernelDensityEstimator`].
+//!
+//! These are used to model the «good» and «bad» parameter distributions.
+//! One can always them separately, as well.
+//!
+//! [1]: https://en.wikipedia.org/wiki/Kernel_(statistics)
+
 pub mod continuous;
 pub mod discrete;
 
 use fastrand::Rng;
 
-/// [Kernel][1] density function.
+/// Density function.
 ///
 /// # Type parameters
 ///
 /// - [`P`]: parameter type
 /// - [`D`]: density type
-///
-/// [1]: https://en.wikipedia.org/wiki/Kernel_(statistics)
 pub trait Density<P, D> {
     /// Calculate density at the given point.
     #[must_use]
     fn density(&self, at: P) -> D;
 }
 
-/// Sampler from [kernel][1] function.
+/// Sample function.
 ///
-/// [1]: https://en.wikipedia.org/wiki/Kernel_(statistics)
-pub trait Sample<T> {
+/// # Type parameters
+///
+/// - [`P`]: parameter type
+pub trait Sample<P> {
     /// Generate a random sample.
     #[must_use]
-    fn sample(&self, rng: &mut Rng) -> T;
+    fn sample(&self, rng: &mut Rng) -> P;
 }

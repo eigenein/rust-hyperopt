@@ -27,13 +27,13 @@ pub struct Component<K, P> {
     pub bandwidth: P,
 }
 
-impl<K, T> Component<K, T> {
+impl<K, P> Component<K, P> {
     /// Construct a [`Component`] from a [`Triple`] of adjacent points.
     ///
     /// Kernel should be standardized because distances to the neighbors are used as bandwidths.
-    pub fn from_triple(kernel: K, triple: Triple<T>) -> Option<Self>
+    pub(crate) fn from_triple(kernel: K, triple: Triple<P>) -> Option<Self>
     where
-        T: Copy + Ord + Sub<T, Output = T>,
+        P: Copy + Ord + Sub<P, Output = P>,
     {
         match triple {
             // For the middle point we take the maximum of the two distances:
@@ -82,10 +82,9 @@ where
 }
 
 impl<P> Component<crate::kernel::continuous::Uniform, P> {
-    /// Create a new component with the uniform kernel function.
+    /// Create a new component with the continuous uniform kernel function.
     ///
     /// The kernel will be scaled and moved so that the «box» spans the specified range.
-    #[allow(clippy::missing_panics_doc)]
     pub fn new(min: P, max: P) -> Self
     where
         P: Add<Output = P> + Copy + Div<Output = P> + Sub<Output = P> + UnsafeFromPrimitive<f64>,
