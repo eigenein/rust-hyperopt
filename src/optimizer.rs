@@ -97,40 +97,43 @@ impl<KFirst, K, P, M> Optimizer<KFirst, K, P, M> {
         M: Ord,
     {
         let n_expected_good_trials = {
+            // `+ 1` is for this new trial.
             let n_total_trials = self.good_trials.len() + self.bad_trials.len() + 1;
             (self.cutoff * n_total_trials as f64).round() as usize
         };
 
+        // This uses an algorithm similar to the median tracking using two heaps,
+        // only I'm tracking the `cutoff` quantile, and I have the B-tree sets instead of heaps.
         if self
             .good_trials
             .worst()
             .is_some_and(|worst_good_trial| metric <= worst_good_trial.metric)
         {
+            // New trial is not worse than the worst good trial, so it belongs to the good trials:
             if self.good_trials.insert(Trial { metric, parameter }) {
+                // Re-balance:
                 while self.good_trials.len() > n_expected_good_trials {
-                    self.bad_trials.insert(
-                        self.good_trials
-                            .pop_worst()
-                            .expect("there should be a good trial"),
-                    );
+                    self.bad_trials
+                        .insert(self.good_trials.pop_worst().unwrap());
                 }
             }
-        } else if self.bad_trials.insert(Trial { metric, parameter }) {
+        }
+        // Otherwise, it belongs to the bad trials:
+        else if self.bad_trials.insert(Trial { metric, parameter }) {
+            // Re-balance:
             while self.good_trials.len() < n_expected_good_trials {
-                self.good_trials.insert(
-                    self.bad_trials
-                        .pop_best()
-                        .expect("there should be a bad trial"),
-                );
+                self.good_trials.insert(self.bad_trials.pop_best().unwrap());
             }
         }
 
+        // Verify the invariant:
         debug_assert!(
             !self
                 .good_trials
                 .worst()
                 .zip(self.bad_trials.best())
                 .is_some_and(|(worst_good, best_bad)| worst_good > best_bad),
+            "the worst good trial should not be worse than the best bad trial",
         );
     }
 
