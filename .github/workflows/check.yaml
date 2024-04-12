@@ -24,6 +24,9 @@ jobs:
       - name: 📥 Checkout
         uses: actions/checkout@v4
 
+      - name: ⚡️ Install additional nightly toolchain
+        uses: dtolnay/rust-toolchain@nightly
+
       - name: ⚡️ Rust Cache
         uses: Swatinem/rust-cache@v2
         with:
