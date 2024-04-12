@@ -7,7 +7,7 @@ use std::{
 use fastrand::Rng;
 
 use crate::{
-    convert::UnsafeInto,
+    convert::{UnsafeFromPrimitive, UnsafeInto},
     kde::Component,
     optimizer::trial::{Trial, Trials},
     Density,
@@ -164,8 +164,8 @@ impl<KFirst, K, P, M> Optimizer<KFirst, K, P, M> {
             + Div<Output = D>
             + Mul<Output = D>
             + Ord
+            + UnsafeFromPrimitive<usize>
             + num_traits::Zero,
-        f64: UnsafeInto<D>,
     {
         // Abandon hope, all ye who enter here!
         // Okay… Slow breath in… and out…
@@ -200,15 +200,16 @@ impl<KFirst, K, P, M> Optimizer<KFirst, K, P, M> {
                 // Use weighted average of the initial component and KDE:
                 let init_density = self.init_component.density(parameter);
                 let l = (init_density
-                    + good_kde.density(parameter) * (self.good_trials.len() as f64).unsafe_into())
-                    / ((self.good_trials.len() + 1) as f64).unsafe_into();
+                    + good_kde.density(parameter)
+                        * D::unsafe_from_primitive(self.good_trials.len()))
+                    / D::unsafe_from_primitive(self.good_trials.len() + 1);
                 debug_assert!(
                     l >= D::zero(),
                     "«good» density should not be negative: {l:?}"
                 );
                 let g = (init_density
-                    + bad_kde.density(parameter) * (self.bad_trials.len() as f64).unsafe_into())
-                    / ((self.bad_trials.len() + 1) as f64).unsafe_into();
+                    + bad_kde.density(parameter) * D::unsafe_from_primitive(self.bad_trials.len()))
+                    / D::unsafe_from_primitive(self.bad_trials.len() + 1);
                 debug_assert!(
                     g >= D::zero(),
                     "«bad» density should not be negative: {g:?}"

@@ -7,7 +7,7 @@ use fastrand::Rng;
 
 use crate::{
     consts::f64::SQRT_5,
-    convert::UnsafeInto,
+    convert::UnsafeFromPrimitive,
     kernel::{Density, Sample},
 };
 
@@ -17,39 +17,36 @@ use crate::{
 #[derive(Copy, Clone, Debug)]
 pub struct Epanechnikov;
 
-impl<P, D> Density<P, D> for Epanechnikov
+impl<T> Density<T, T> for Epanechnikov
 where
-    P: Copy
-        + Add<Output = P>
+    T: Copy
+        + Add<Output = T>
         + Debug
-        + Div<Output = P>
-        + Mul<Output = P>
-        + Neg<Output = P>
+        + Div<Output = T>
+        + Mul<Output = T>
+        + Neg<Output = T>
         + PartialOrd
-        + Sub<Output = P>
-        + UnsafeInto<D>
-        + num_traits::One,
-    D: Mul<Output = D> + num_traits::Zero,
-    f64: UnsafeInto<P> + UnsafeInto<D>,
+        + Sub<Output = T>
+        + UnsafeFromPrimitive<f64>
+        + num_traits::One
+        + num_traits::Zero,
 {
-    fn density(&self, at: P) -> D {
+    fn density(&self, at: T) -> T {
         // Scale to `-1..1`:
-        let at = at / SQRT_5.unsafe_into();
-        if !(-P::one()..=P::one()).contains(&at) {
+        let at = at / T::unsafe_from_primitive(SQRT_5);
+        if !(-T::one()..=T::one()).contains(&at) {
             // Return zero outside the valid interval.
-            return D::zero();
+            return T::zero();
         }
 
         // Calculate the density and normalize:
-        UnsafeInto::<D>::unsafe_into(0.75 / SQRT_5)
-            * UnsafeInto::<D>::unsafe_into(P::one() - at * at)
+        T::unsafe_from_primitive(0.75 / SQRT_5) * (T::one() - at * at)
     }
 }
 
 impl<P> Sample<P> for Epanechnikov
 where
-    P: Mul<Output = P>,
-    f64: UnsafeInto<P>,
+    P: Mul<Output = P> + UnsafeFromPrimitive<f64>,
 {
     /// [Generate a sample][1] from the Epanechnikov kernel.
     ///
@@ -65,7 +62,7 @@ where
         let x = if rng.bool() { x } else { -x };
 
         // Scale to have a standard deviation of 1:
-        UnsafeInto::<P>::unsafe_into(x) * UnsafeInto::<P>::unsafe_into(SQRT_5)
+        P::unsafe_from_primitive(x * SQRT_5)
     }
 }
 

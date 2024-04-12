@@ -4,7 +4,7 @@ use fastrand::Rng;
 
 use crate::{
     consts::f64::FRAC_1_SQRT_TAU,
-    convert::UnsafeInto,
+    convert::UnsafeFromPrimitive,
     kernel::{Density, Sample},
 };
 
@@ -14,21 +14,18 @@ use crate::{
 #[derive(Copy, Clone, Debug)]
 pub struct Gaussian;
 
-impl<P, D> Density<P, D> for Gaussian
+impl<T> Density<T, T> for Gaussian
 where
-    P: Debug + UnsafeInto<D> + num_traits::Float,
-    f64: UnsafeInto<P>,
+    T: Debug + UnsafeFromPrimitive<f64> + num_traits::Float,
 {
-    fn density(&self, at: P) -> D {
-        (UnsafeInto::<P>::unsafe_into(FRAC_1_SQRT_TAU)
-            * (UnsafeInto::<P>::unsafe_into(-0.5) * at * at).exp())
-        .unsafe_into()
+    fn density(&self, at: T) -> T {
+        T::unsafe_from_primitive(FRAC_1_SQRT_TAU) * (T::unsafe_from_primitive(-0.5) * at * at).exp()
     }
 }
 
 impl<P> Sample<P> for Gaussian
 where
-    f64: UnsafeInto<P>,
+    P: UnsafeFromPrimitive<f64>,
 {
     /// [Generate a sample][1] from the Gaussian kernel.
     ///
@@ -36,7 +33,7 @@ where
     fn sample(&self, rng: &mut Rng) -> P {
         let u1 = rng.f64();
         let u2 = rng.f64();
-        ((-2.0 * u1.ln()).sqrt() * (TAU * u2).cos()).unsafe_into()
+        P::unsafe_from_primitive((-2.0 * u1.ln()).sqrt() * (TAU * u2).cos())
     }
 }
 

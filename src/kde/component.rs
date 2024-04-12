@@ -7,7 +7,7 @@ use fastrand::Rng;
 
 use crate::{
     consts::f64::DOUBLE_SQRT_3,
-    convert::UnsafeInto,
+    convert::{UnsafeFromPrimitive, UnsafeInto},
     iter::Triple,
     kernel::Uniform,
     Density,
@@ -89,13 +89,12 @@ impl<P> Component<Uniform, P> {
     #[allow(clippy::missing_panics_doc)]
     pub fn new(min: P, max: P) -> Self
     where
-        P: Add<Output = P> + Copy + Div<Output = P> + Sub<Output = P>,
-        f64: UnsafeInto<P>,
+        P: Add<Output = P> + Copy + Div<Output = P> + Sub<Output = P> + UnsafeFromPrimitive<f64>,
     {
         Self {
             kernel: Uniform,
-            location: (min + max) / 2.0.unsafe_into(),
-            bandwidth: (max - min) / DOUBLE_SQRT_3.unsafe_into(),
+            location: (min + max) / P::unsafe_from_primitive(2.0),
+            bandwidth: (max - min) / P::unsafe_from_primitive(DOUBLE_SQRT_3),
         }
     }
 }
