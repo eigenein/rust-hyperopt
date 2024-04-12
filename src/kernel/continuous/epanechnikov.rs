@@ -5,7 +5,7 @@ use fastrand::Rng;
 use crate::{
     consts::f64::SQRT_5,
     kernel::{Density, Sample},
-    traits::{Multiplicative, Ring},
+    traits::{Multiplicative, NumRing},
 };
 
 /// [Standardized][1] Epanechnikov (parabolic) kernel.
@@ -16,7 +16,7 @@ pub struct Epanechnikov;
 
 impl<T> Density<T, T> for Epanechnikov
 where
-    T: Copy + Debug + PartialOrd + Ring + num_traits::FromPrimitive,
+    T: Copy + Debug + PartialOrd + NumRing + num_traits::FromPrimitive,
 {
     fn density(&self, at: T) -> T {
         // Scale to `-1..1`:
