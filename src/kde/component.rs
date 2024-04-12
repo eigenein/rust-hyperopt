@@ -5,13 +5,7 @@ use std::{
 
 use fastrand::Rng;
 
-use crate::{
-    consts::f64::DOUBLE_SQRT_3,
-    convert::{UnsafeFromPrimitive, UnsafeInto},
-    iter::Triple,
-    Density,
-    Sample,
-};
+use crate::{consts::f64::DOUBLE_SQRT_3, iter::Triple, Density, Sample};
 
 /// Single component of a [`crate::kde::KernelDensityEstimator`].
 #[derive(Copy, Clone, Debug)]
@@ -63,11 +57,13 @@ impl<K, P> Component<K, P> {
 impl<K, P, D> Density<P, D> for Component<K, P>
 where
     K: Density<P, D>,
-    P: Copy + Debug + Div<Output = P> + Sub<Output = P> + UnsafeInto<D>,
+    P: Copy + Debug + Div<Output = P> + Sub<Output = P> + TryInto<D>,
+    <P as TryInto<D>>::Error: Debug,
     D: Div<Output = D>,
 {
     fn density(&self, at: P) -> D {
-        self.kernel.density((at - self.location) / self.bandwidth) / self.bandwidth.unsafe_into()
+        self.kernel.density((at - self.location) / self.bandwidth)
+            / self.bandwidth.try_into().unwrap()
     }
 }
 
@@ -85,14 +81,18 @@ impl<P> Component<crate::kernel::continuous::Uniform, P> {
     /// Create a new component with the continuous uniform kernel function.
     ///
     /// The kernel will be scaled and moved so that the «box» spans the specified range.
+    ///
+    /// # Panics
+    ///
+    /// This function panics if location or bandwidth cannot be represented with the parameter type.
     pub fn new(min: P, max: P) -> Self
     where
-        P: Add<Output = P> + Copy + Div<Output = P> + Sub<Output = P> + UnsafeFromPrimitive<f64>,
+        P: Add<Output = P> + Copy + Div<Output = P> + Sub<Output = P> + num_traits::FromPrimitive,
     {
         Self {
             kernel: crate::kernel::continuous::Uniform,
-            location: (min + max) / P::unsafe_from_primitive(2.0),
-            bandwidth: (max - min) / P::unsafe_from_primitive(DOUBLE_SQRT_3),
+            location: (min + max) / P::from_u8(2).unwrap(),
+            bandwidth: (max - min) / P::from_f64(DOUBLE_SQRT_3).unwrap(),
         }
     }
 }

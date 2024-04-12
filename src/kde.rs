@@ -8,7 +8,7 @@ use std::{
 use fastrand::Rng;
 
 pub use self::component::Component;
-use crate::{convert::UnsafeFromPrimitive, Density, Sample};
+use crate::{Density, Sample};
 
 mod component;
 
@@ -29,7 +29,7 @@ where
     C: Iterator + Clone,
     C::Item: Density<P, D>,
     P: Copy,
-    D: Add<Output = D> + Div<Output = D> + UnsafeFromPrimitive<usize> + num_traits::Zero,
+    D: Add<Output = D> + Div<Output = D> + num_traits::FromPrimitive + num_traits::Zero,
 {
     /// Calculate the KDE's density at the specified point.
     ///
@@ -45,7 +45,7 @@ where
         if n_points == 0 {
             D::zero()
         } else {
-            sum / D::unsafe_from_primitive(n_points)
+            sum / D::from_usize(n_points).unwrap()
         }
     }
 }

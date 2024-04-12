@@ -4,11 +4,7 @@ use fastrand::Rng;
 use num_integer::binomial;
 use num_iter::range_step_from;
 
-use crate::{
-    convert::{UnsafeFromPrimitive, UnsafeInto},
-    Density,
-    Sample,
-};
+use crate::{Density, Sample};
 
 /// Discrete kernel function based on the [binomial distribution][1].
 ///
@@ -28,26 +24,29 @@ impl<P, D> Binomial<P, D> {
     /// Probability mass function.
     fn pmf(&self, at: P) -> D
     where
-        P: Copy + num_integer::Integer + UnsafeInto<D>,
+        P: Copy + num_integer::Integer + TryInto<D>,
+        <P as TryInto<D>>::Error: Debug,
         D: num_traits::Float,
     {
-        binomial(self.n, at).unsafe_into()
-            * self.p.powf(at.unsafe_into())
-            * (D::one() - self.p).powf((self.n - at).unsafe_into())
+        binomial(self.n, at).try_into().unwrap()
+            * self.p.powf(at.try_into().unwrap())
+            * (D::one() - self.p).powf((self.n - at).try_into().unwrap())
     }
 
     /// Standard deviation.
     fn std(&self) -> D
     where
-        P: Copy + UnsafeInto<D>,
+        P: Copy + TryInto<D>,
+        <P as TryInto<D>>::Error: Debug,
         D: num_traits::Float,
     {
-        (self.n.unsafe_into() * self.p * (D::one() - self.p)).sqrt()
+        (self.n.try_into().unwrap() * self.p * (D::one() - self.p)).sqrt()
     }
 
     fn inverse_cdf(&self, cdf: D) -> P
     where
-        P: Copy + Debug + UnsafeInto<D> + num_integer::Integer,
+        P: Copy + Debug + TryInto<D> + num_integer::Integer,
+        <P as TryInto<D>>::Error: Debug,
         D: Copy + num_traits::Float,
     {
         range_step_from(P::zero(), P::one())
@@ -63,7 +62,8 @@ impl<P, D> Binomial<P, D> {
 
 impl<P, D> Density<P, D> for Binomial<P, D>
 where
-    P: Copy + num_integer::Integer + UnsafeInto<D>,
+    P: Copy + num_integer::Integer + TryInto<D>,
+    <P as TryInto<D>>::Error: Debug,
     D: num_traits::Float,
 {
     fn density(&self, at: P) -> D {
@@ -73,11 +73,12 @@ where
 
 impl<P, D> Sample<P> for Binomial<P, D>
 where
-    P: Copy + Debug + UnsafeInto<D> + num_integer::Integer,
-    D: UnsafeFromPrimitive<f64> + num_traits::Float,
+    P: Copy + Debug + TryInto<D> + num_integer::Integer,
+    <P as TryInto<D>>::Error: Debug,
+    D: num_traits::Float + num_traits::FromPrimitive,
 {
     fn sample(&self, rng: &mut Rng) -> P {
-        self.inverse_cdf(D::unsafe_from_primitive(rng.f64()))
+        self.inverse_cdf(D::from_f64(rng.f64()).unwrap())
     }
 }
 

@@ -1,7 +1,6 @@
 #![doc = include_str!("../README.md")]
 
 pub mod consts;
-mod convert;
 mod iter;
 pub mod kde;
 pub mod kernel;

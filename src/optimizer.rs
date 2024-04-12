@@ -7,7 +7,6 @@ use std::{
 use fastrand::Rng;
 
 use crate::{
-    convert::{UnsafeFromPrimitive, UnsafeInto},
     kde::Component,
     optimizer::trial::{Trial, Trials},
     Density,
@@ -148,7 +147,12 @@ impl<KInit, K, P, M> Optimizer<KInit, K, P, M> {
     /// # Type parameters
     ///
     /// - [`D`]: kernel density type
-    #[allow(clippy::cast_precision_loss, clippy::missing_panics_doc)]
+    ///
+    /// # Panics
+    ///
+    /// This method may panic if a random or calculated number cannot be converted to
+    /// the parameter or density type.
+    #[allow(clippy::cast_precision_loss)]
     pub fn new_trial<D>(&self, rng: &mut Rng) -> P
     where
         KInit: Copy + Density<P, D> + Sample<P>,
@@ -160,14 +164,15 @@ impl<KInit, K, P, M> Optimizer<KInit, K, P, M> {
             + Mul<Output = P>
             + Ord
             + Sub<Output = P>
-            + UnsafeInto<D>,
+            + TryInto<D>,
+        <P as TryInto<D>>::Error: Debug,
         D: Add<Output = D>
             + Copy
             + Debug
             + Div<Output = D>
             + Mul<Output = D>
             + Ord
-            + UnsafeFromPrimitive<usize>
+            + num_traits::FromPrimitive
             + num_traits::Zero,
     {
         // Abandon hope, all ye who enter here!
@@ -203,16 +208,15 @@ impl<KInit, K, P, M> Optimizer<KInit, K, P, M> {
                 // Use weighted average of the initial component and KDE:
                 let init_density = self.init_component.density(parameter);
                 let l = (init_density
-                    + good_kde.density(parameter)
-                        * D::unsafe_from_primitive(self.good_trials.len()))
-                    / D::unsafe_from_primitive(self.good_trials.len() + 1);
+                    + good_kde.density(parameter) * D::from_usize(self.good_trials.len()).unwrap())
+                    / D::from_usize(self.good_trials.len() + 1).unwrap();
                 debug_assert!(
                     l >= D::zero(),
                     "«good» density should not be negative: {l:?}"
                 );
                 let g = (init_density
-                    + bad_kde.density(parameter) * D::unsafe_from_primitive(self.bad_trials.len()))
-                    / D::unsafe_from_primitive(self.bad_trials.len() + 1);
+                    + bad_kde.density(parameter) * D::from_usize(self.bad_trials.len()).unwrap())
+                    / D::from_usize(self.bad_trials.len() + 1).unwrap();
                 debug_assert!(
                     g >= D::zero(),
                     "«bad» density should not be negative: {g:?}"

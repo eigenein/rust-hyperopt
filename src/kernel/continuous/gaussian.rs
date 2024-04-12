@@ -4,7 +4,6 @@ use fastrand::Rng;
 
 use crate::{
     consts::f64::FRAC_1_SQRT_TAU,
-    convert::UnsafeFromPrimitive,
     kernel::{Density, Sample},
 };
 
@@ -16,16 +15,16 @@ pub struct Gaussian;
 
 impl<T> Density<T, T> for Gaussian
 where
-    T: Debug + UnsafeFromPrimitive<f64> + num_traits::Float,
+    T: Debug + num_traits::Float + num_traits::FromPrimitive,
 {
     fn density(&self, at: T) -> T {
-        T::unsafe_from_primitive(FRAC_1_SQRT_TAU) * (T::unsafe_from_primitive(-0.5) * at * at).exp()
+        T::from_f64(FRAC_1_SQRT_TAU).unwrap() * (T::from_f64(-0.5).unwrap() * at * at).exp()
     }
 }
 
 impl<P> Sample<P> for Gaussian
 where
-    P: UnsafeFromPrimitive<f64>,
+    P: num_traits::FromPrimitive,
 {
     /// [Generate a sample][1] from the Gaussian kernel.
     ///
@@ -33,7 +32,7 @@ where
     fn sample(&self, rng: &mut Rng) -> P {
         let u1 = rng.f64();
         let u2 = rng.f64();
-        P::unsafe_from_primitive((-2.0 * u1.ln()).sqrt() * (TAU * u2).cos())
+        P::from_f64((-2.0 * u1.ln()).sqrt() * (TAU * u2).cos()).unwrap()
     }
 }
 

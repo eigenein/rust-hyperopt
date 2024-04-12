@@ -7,7 +7,6 @@ use fastrand::Rng;
 
 use crate::{
     consts::f64::SQRT_5,
-    convert::UnsafeFromPrimitive,
     kernel::{Density, Sample},
 };
 
@@ -27,26 +26,26 @@ where
         + Neg<Output = T>
         + PartialOrd
         + Sub<Output = T>
-        + UnsafeFromPrimitive<f64>
+        + num_traits::FromPrimitive
         + num_traits::One
         + num_traits::Zero,
 {
     fn density(&self, at: T) -> T {
         // Scale to `-1..1`:
-        let at = at / T::unsafe_from_primitive(SQRT_5);
+        let at = at / T::from_f64(SQRT_5).unwrap();
         if !(-T::one()..=T::one()).contains(&at) {
             // Return zero outside the valid interval.
             return T::zero();
         }
 
         // Calculate the density and normalize:
-        T::unsafe_from_primitive(0.75 / SQRT_5) * (T::one() - at * at)
+        T::from_f64(0.75 / SQRT_5).unwrap() * (T::one() - at * at)
     }
 }
 
 impl<P> Sample<P> for Epanechnikov
 where
-    P: Mul<Output = P> + UnsafeFromPrimitive<f64>,
+    P: Mul<Output = P> + num_traits::FromPrimitive,
 {
     /// [Generate a sample][1] from the Epanechnikov kernel.
     ///
@@ -62,7 +61,7 @@ where
         let x = if rng.bool() { x } else { -x };
 
         // Scale to have a standard deviation of 1:
-        P::unsafe_from_primitive(x * SQRT_5)
+        P::from_f64(x * SQRT_5).unwrap()
     }
 }
 
