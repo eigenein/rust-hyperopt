@@ -95,6 +95,7 @@ impl<KInit, K, P, M> Optimizer<KInit, K, P, M> {
         P: Copy + Debug + Ord,
         M: Debug + Ord,
     {
+        let trial = Trial { metric, parameter };
         let n_expected_good_trials = {
             // `+ 1` is for this new trial.
             let n_total_trials = self.good_trials.len() + self.bad_trials.len() + 1;
@@ -106,10 +107,10 @@ impl<KInit, K, P, M> Optimizer<KInit, K, P, M> {
         if self
             .good_trials
             .worst()
-            .is_some_and(|worst_good_trial| metric <= worst_good_trial.metric)
+            .is_some_and(|worst_good_trial| &trial <= worst_good_trial)
         {
             // New trial is not worse than the worst good trial, so it belongs to the good trials:
-            if self.good_trials.insert(Trial { metric, parameter }) {
+            if self.good_trials.insert(trial) {
                 // Re-balance:
                 while self.good_trials.len() > n_expected_good_trials {
                     self.bad_trials
@@ -118,7 +119,7 @@ impl<KInit, K, P, M> Optimizer<KInit, K, P, M> {
             }
         }
         // Otherwise, it belongs to the bad trials:
-        else if self.bad_trials.insert(Trial { metric, parameter }) {
+        else if self.bad_trials.insert(trial) {
             // Re-balance:
             while self.good_trials.len() < n_expected_good_trials {
                 self.good_trials.insert(self.bad_trials.pop_best().unwrap());
