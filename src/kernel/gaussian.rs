@@ -13,9 +13,14 @@ use crate::{
 #[derive(Copy, Clone, Debug)]
 pub struct Gaussian;
 
-impl<T: num_traits::Float> Density<T> for Gaussian {
-    fn density(&self, at: T) -> T {
-        T::from(FRAC_1_SQRT_TAU).unwrap() * (T::from(-0.5).unwrap() * at * at).exp()
+impl<P, D> Density<P, D> for Gaussian
+where
+    P: num_traits::Float,
+    D: num_traits::Float,
+{
+    fn density(&self, at: P) -> D {
+        D::from(FRAC_1_SQRT_TAU).unwrap()
+            * (D::from(-0.5).unwrap() * D::from(at * at).unwrap()).exp()
     }
 }
 
@@ -42,15 +47,15 @@ mod tests {
     #[test]
     fn density_ok() {
         assert_abs_diff_eq!(
-            Density::<f64>::density(&Gaussian, 0.0),
+            Density::<f64, f64>::density(&Gaussian, 0.0),
             0.398_942_280_401_432_7,
         );
         assert_abs_diff_eq!(
-            Density::<f64>::density(&Gaussian, 1.0),
+            Density::<f64, f64>::density(&Gaussian, 1.0),
             0.241_970_724_519_143_37,
         );
         assert_abs_diff_eq!(
-            Density::<f64>::density(&Gaussian, -1.0),
+            Density::<f64, f64>::density(&Gaussian, -1.0),
             0.241_970_724_519_143_37,
         );
     }

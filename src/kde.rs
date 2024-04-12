@@ -15,26 +15,27 @@ mod component;
 #[derive(Copy, Clone, Debug)]
 pub struct KernelDensityEstimator<C>(pub C);
 
-impl<T, C> Density<T> for KernelDensityEstimator<C>
+impl<P, D, C> Density<P, D> for KernelDensityEstimator<C>
 where
-    T: Copy + num_traits::FromPrimitive + num_traits::Num,
     C: Iterator + Clone,
-    C::Item: Density<T>,
+    C::Item: Density<P, D>,
+    P: Copy,
+    D: num_traits::Float,
 {
     /// Calculate the KDE's density at the specified point.
     ///
-    /// The method returns [`T::zero()`], if there are no components.
-    fn density(&self, at: T) -> T {
+    /// The method returns [`P::zero()`], if there are no components.
+    fn density(&self, at: P) -> D {
         let (n_points, sum) = self
             .0
             .clone()
-            .fold((0_usize, T::zero()), |(n, sum), component| {
+            .fold((0_usize, D::zero()), |(n, sum), component| {
                 (n + 1, sum + component.density(at))
             });
         if n_points == 0 {
-            T::zero()
+            D::zero()
         } else {
-            sum / T::from_usize(n_points).unwrap()
+            sum / D::from(n_points).unwrap()
         }
     }
 }

@@ -7,15 +7,15 @@ use crate::{consts::f64::DOUBLE_SQRT_3, iter::Triple, kernel::Uniform, Density, 
 /// Single component of a [`crate::kde::KernelDensityEstimator`].
 #[derive(Copy, Clone, Debug)]
 #[must_use]
-pub struct Component<K, T> {
+pub struct Component<K, P> {
     /// Kernel function.
     pub kernel: K,
 
     /// Center of the corresponding kernel.
-    pub location: T,
+    pub location: P,
 
     /// Bandwidth of the corresponding kernel.
-    pub bandwidth: T,
+    pub bandwidth: P,
 }
 
 impl<K, T> Component<K, T> {
@@ -51,13 +51,15 @@ impl<K, T> Component<K, T> {
     }
 }
 
-impl<K, T> Density<T> for Component<K, T>
+impl<K, P, D> Density<P, D> for Component<K, P>
 where
-    K: Density<T>,
-    T: Copy + num_traits::Num,
+    K: Density<P, D>,
+    P: Copy + num_traits::Num + num_traits::ToPrimitive,
+    D: num_traits::Float,
 {
-    fn density(&self, at: T) -> T {
-        self.kernel.density((at - self.location) / self.bandwidth) / self.bandwidth
+    fn density(&self, at: P) -> D {
+        self.kernel.density((at - self.location) / self.bandwidth)
+            / D::from(self.bandwidth).unwrap()
     }
 }
 

@@ -9,12 +9,16 @@ use crate::{
 #[derive(Copy, Clone, Debug)]
 pub struct Uniform;
 
-impl<T: num_traits::Float> Density<T> for Uniform {
-    fn density(&self, at: T) -> T {
-        if (T::from(-SQRT_3).unwrap()..=T::from(SQRT_3).unwrap()).contains(&at) {
-            T::one()
+impl<P, D> Density<P, D> for Uniform
+where
+    P: num_traits::Float,
+    D: num_traits::Num,
+{
+    fn density(&self, at: P) -> D {
+        if (P::from(-SQRT_3).unwrap()..=P::from(SQRT_3).unwrap()).contains(&at) {
+            D::one()
         } else {
-            T::zero()
+            D::zero()
         }
     }
 }

@@ -136,11 +136,12 @@ impl<KFirst, K, P, M> Optimizer<KFirst, K, P, M> {
     ///
     /// Abandon hope, all ye who enter here!
     #[allow(clippy::missing_panics_doc)]
-    pub fn new_trial(&self, rng: &mut Rng) -> P
+    pub fn new_trial<D>(&self, rng: &mut Rng) -> P
     where
-        KFirst: Copy + Density<P> + Sample<P>,
-        K: Copy + Density<P> + Sample<P>,
-        P: Copy + Ord + num_traits::FromPrimitive + num_traits::Num,
+        KFirst: Copy + Density<P, D> + Sample<P>,
+        K: Copy + Density<P, D> + Sample<P>,
+        P: Copy + Ord + num_traits::Num + num_traits::ToPrimitive,
+        D: Copy + Ord + num_traits::Float,
     {
         // Okay… Slow breath in… and out…
         // First, construct the KDEs:
@@ -170,11 +171,11 @@ impl<KFirst, K, P, M> Optimizer<KFirst, K, P, M> {
                 // Use weighted average of the initial component and KDE:
                 let init_density = self.init_component.density(parameter);
                 let l = (init_density
-                    + good_kde.density(parameter) * P::from_usize(self.good_trials.len()).unwrap())
-                    / P::from_usize(self.good_trials.len() + 1).unwrap();
+                    + good_kde.density(parameter) * D::from(self.good_trials.len()).unwrap())
+                    / D::from(self.good_trials.len() + 1).unwrap();
                 let g = (init_density
-                    + bad_kde.density(parameter) * P::from_usize(self.bad_trials.len()).unwrap())
-                    / P::from_usize(self.bad_trials.len() + 1).unwrap();
+                    + bad_kde.density(parameter) * D::from(self.bad_trials.len()).unwrap())
+                    / D::from(self.bad_trials.len() + 1).unwrap();
                 (parameter, l / g)
             })
             .take(self.n_candidates);

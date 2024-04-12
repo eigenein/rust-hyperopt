@@ -11,13 +11,17 @@ use crate::{
 #[derive(Copy, Clone, Debug)]
 pub struct Epanechnikov;
 
-impl<T: num_traits::Float> Density<T> for Epanechnikov {
-    fn density(&self, at: T) -> T {
+impl<P, D> Density<P, D> for Epanechnikov
+where
+    P: num_traits::Float,
+    D: num_traits::Float,
+{
+    fn density(&self, at: P) -> D {
         // Scale to `-1..1`:
-        let at = at / T::from(SQRT_5).unwrap();
+        let at = at / P::from(SQRT_5).unwrap();
 
         // Calculate the density and normalize:
-        T::from(0.75).unwrap() / T::from(SQRT_5).unwrap() * at.mul_add(-at, T::one())
+        D::from(0.75 / SQRT_5).unwrap() * D::from(at.mul_add(-at, P::one())).unwrap()
     }
 }
 
@@ -63,12 +67,15 @@ mod tests {
     #[test]
     fn density_ok() {
         assert_abs_diff_eq!(
-            Density::<f64>::density(&Epanechnikov, 0.0),
+            Density::<f64, f64>::density(&Epanechnikov, 0.0),
             0.335_410_196_624_968_46
         );
-        assert_abs_diff_eq!(Density::<f64>::density(&Epanechnikov, 5.0_f64.sqrt()), 0.0);
         assert_abs_diff_eq!(
-            Density::<f64>::density(&Epanechnikov, -(5.0_f64.sqrt())),
+            Density::<f64, f64>::density(&Epanechnikov, 5.0_f64.sqrt()),
+            0.0
+        );
+        assert_abs_diff_eq!(
+            Density::<f64, f64>::density(&Epanechnikov, -(5.0_f64.sqrt())),
             0.0
         );
     }
