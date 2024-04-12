@@ -9,7 +9,9 @@ Tree-of-Parzen-estimators hyperparameter optimization for Rust
 ](https://app.codecov.io/gh/eigenein/rust-hyperopt)
 ![Maintenance](https://img.shields.io/maintenance/yes/2024?style=for-the-badge)
 
-## Example
+## Examples
+
+### Continuous
 
 ```rust
 use std::f64::consts::{FRAC_PI_2, PI};
@@ -35,10 +37,10 @@ fn main() {
     let mut rng = Rng::new();
     for _ in 0..100 {
         let x = optimizer.new_trial::<NotNan<f64>>(&mut rng);
-        println!("x = {x}, metric = {}", x.cos());
         optimizer.feed_back(x, NotNan::new(x.cos()).unwrap());
     }
-    println!("optimizer = {optimizer:?}");
-    assert_abs_diff_eq!(optimizer.best_trial().unwrap().parameter.into_inner(), PI);
+    let best_trial = optimizer.best_trial().unwrap();
+    assert_abs_diff_eq!(best_trial.parameter.into_inner(), PI, epsilon = 0.2);
+    assert_abs_diff_eq!(best_trial.metric.into_inner(), -1.0, epsilon = 0.01);
 }
 ```

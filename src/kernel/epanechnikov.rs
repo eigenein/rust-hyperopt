@@ -25,15 +25,20 @@ where
         + Div<Output = P>
         + Mul<Output = P>
         + Neg<Output = P>
+        + PartialOrd
         + Sub<Output = P>
         + UnsafeInto<D>
         + num_traits::One,
-    D: Mul<Output = D>,
+    D: Mul<Output = D> + num_traits::Zero,
     f64: UnsafeInto<P> + UnsafeInto<D>,
 {
     fn density(&self, at: P) -> D {
         // Scale to `-1..1`:
         let at = at / SQRT_5.unsafe_into();
+        if !(-P::one()..=P::one()).contains(&at) {
+            // Return zero outside the valid interval.
+            return D::zero();
+        }
 
         // Calculate the density and normalize:
         UnsafeInto::<D>::unsafe_into(0.75 / SQRT_5)
@@ -82,7 +87,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn density_ok() {
+    fn density_inside_ok() {
         assert_abs_diff_eq!(
             Density::<f64, f64>::density(&Epanechnikov, 0.0),
             0.335_410_196_624_968_46
@@ -95,6 +100,13 @@ mod tests {
             Density::<f64, f64>::density(&Epanechnikov, -(5.0_f64.sqrt())),
             0.0
         );
+    }
+
+    #[test]
+    #[allow(clippy::float_cmp)]
+    fn density_outside_ok() {
+        assert_eq!(Density::<f64, f64>::density(&Epanechnikov, -10.0), 0.0);
+        assert_eq!(Density::<f64, f64>::density(&Epanechnikov, 10.0), 0.0);
     }
 
     #[test]

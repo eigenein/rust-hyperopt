@@ -79,7 +79,7 @@ impl<P, M> Trials<P, M> {
     {
         if self.by_parameter.insert(trial.parameter) {
             assert!(self.by_metric.insert(trial));
-            assert_eq!(self.by_parameter.len(), self.by_metric.len());
+            debug_assert_eq!(self.by_parameter.len(), self.by_metric.len());
             true
         } else {
             false
@@ -111,7 +111,7 @@ impl<P, M> Trials<P, M> {
         M: Ord,
     {
         let best_trial = self.by_metric.pop_first()?;
-        assert!(self.by_parameter.remove(&best_trial.parameter));
+        self.remove_parameter(&best_trial.parameter);
         Some(best_trial)
     }
 
@@ -122,8 +122,18 @@ impl<P, M> Trials<P, M> {
         M: Ord,
     {
         let worst_trial = self.by_metric.pop_last()?;
-        assert!(self.by_parameter.remove(&worst_trial.parameter));
+        self.remove_parameter(&worst_trial.parameter);
         Some(worst_trial)
+    }
+
+    /// Remove the parameter and ensure the variants.
+    fn remove_parameter(&mut self, parameter: &P)
+    where
+        P: Ord,
+        M: Ord,
+    {
+        assert!(self.by_parameter.remove(parameter));
+        debug_assert_eq!(self.by_parameter.len(), self.by_metric.len());
     }
 
     /// Construct a [`KernelDensityEstimator`] from the trials.

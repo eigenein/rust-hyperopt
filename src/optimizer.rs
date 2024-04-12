@@ -155,7 +155,13 @@ impl<KFirst, K, P, M> Optimizer<KFirst, K, P, M> {
             + Ord
             + Sub<Output = P>
             + UnsafeInto<D>,
-        D: Add<Output = D> + Copy + Div<Output = D> + Mul<Output = D> + Ord + num_traits::Zero,
+        D: Add<Output = D>
+            + Copy
+            + Debug
+            + Div<Output = D>
+            + Mul<Output = D>
+            + Ord
+            + num_traits::Zero,
         f64: UnsafeInto<D>,
     {
         // Abandon hope, all ye who enter here!
@@ -193,9 +199,17 @@ impl<KFirst, K, P, M> Optimizer<KFirst, K, P, M> {
                 let l = (init_density
                     + good_kde.density(parameter) * (self.good_trials.len() as f64).unsafe_into())
                     / ((self.good_trials.len() + 1) as f64).unsafe_into();
+                debug_assert!(
+                    l >= D::zero(),
+                    "«good» density should not be negative: {l:?}"
+                );
                 let g = (init_density
                     + bad_kde.density(parameter) * (self.bad_trials.len() as f64).unsafe_into())
                     / ((self.bad_trials.len() + 1) as f64).unsafe_into();
+                debug_assert!(
+                    g >= D::zero(),
+                    "«bad» density should not be negative: {g:?}"
+                );
                 (parameter, l / g)
             })
             .take(self.n_candidates);
