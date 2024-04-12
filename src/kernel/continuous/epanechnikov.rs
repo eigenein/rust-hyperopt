@@ -1,13 +1,11 @@
-use std::{
-    fmt::Debug,
-    ops::{Add, Div, Mul, Neg, Sub},
-};
+use std::fmt::Debug;
 
 use fastrand::Rng;
 
 use crate::{
     consts::f64::SQRT_5,
     kernel::{Density, Sample},
+    traits::{Multiplicative, Ring},
 };
 
 /// [Standardized][1] Epanechnikov (parabolic) kernel.
@@ -18,17 +16,7 @@ pub struct Epanechnikov;
 
 impl<T> Density<T, T> for Epanechnikov
 where
-    T: Copy
-        + Add<Output = T>
-        + Debug
-        + Div<Output = T>
-        + Mul<Output = T>
-        + Neg<Output = T>
-        + PartialOrd
-        + Sub<Output = T>
-        + num_traits::FromPrimitive
-        + num_traits::One
-        + num_traits::Zero,
+    T: Copy + Debug + PartialOrd + Ring + num_traits::FromPrimitive,
 {
     fn density(&self, at: T) -> T {
         // Scale to `-1..1`:
@@ -45,7 +33,7 @@ where
 
 impl<P> Sample<P> for Epanechnikov
 where
-    P: Mul<Output = P> + num_traits::FromPrimitive,
+    P: Multiplicative + num_traits::FromPrimitive,
 {
     /// [Generate a sample][1] from the Epanechnikov kernel.
     ///

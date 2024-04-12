@@ -1,14 +1,11 @@
-use std::{
-    fmt::Debug,
-    iter,
-    ops::{Add, Div, Mul, Sub},
-};
+use std::{fmt::Debug, iter};
 
 use fastrand::Rng;
 
 use crate::{
     kde::Component,
     optimizer::trial::{Trial, Trials},
+    traits::{Additive, Multiplicative},
     Density,
     Sample,
 };
@@ -158,20 +155,12 @@ impl<KInit, K, P, M> Optimizer<KInit, K, P, M> {
     where
         KInit: Copy + Density<P, D> + Sample<P>,
         K: Copy + Density<P, D> + Sample<P>,
-        P: Add<Output = P>
-            + Copy
-            + Debug
-            + Div<Output = P>
-            + Mul<Output = P>
-            + Ord
-            + Sub<Output = P>
-            + TryInto<D>,
+        P: Additive + Multiplicative + Copy + Debug + Ord + TryInto<D>,
         <P as TryInto<D>>::Error: Debug,
-        D: Add<Output = D>
+        D: Additive
             + Copy
             + Debug
-            + Div<Output = D>
-            + Mul<Output = D>
+            + Multiplicative
             + Ord
             + num_traits::FromPrimitive
             + num_traits::Zero,

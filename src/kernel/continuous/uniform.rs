@@ -1,10 +1,9 @@
-use std::ops::{Add, Mul};
-
 use fastrand::Rng;
 
 use crate::{
     consts::f64::{DOUBLE_SQRT_3, SQRT_3},
     kernel::{Density, Sample},
+    traits::{Additive, Multiplicative},
 };
 
 /// Normalized uniform kernel, also known as «boxcar function».
@@ -27,7 +26,7 @@ where
 
 impl<P> Sample<P> for Uniform
 where
-    P: Add<Output = P> + Mul<Output = P> + num_traits::FromPrimitive,
+    P: Additive + Multiplicative + num_traits::FromPrimitive,
 {
     /// Generate a sample from the uniform kernel.
     fn sample(&self, rng: &mut Rng) -> P {

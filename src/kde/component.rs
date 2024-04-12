@@ -1,11 +1,14 @@
-use std::{
-    fmt::Debug,
-    ops::{Add, Div, Mul, Sub},
-};
+use std::fmt::Debug;
 
 use fastrand::Rng;
 
-use crate::{consts::f64::DOUBLE_SQRT_3, iter::Triple, Density, Sample};
+use crate::{
+    consts::f64::DOUBLE_SQRT_3,
+    iter::Triple,
+    traits::{Additive, Multiplicative},
+    Density,
+    Sample,
+};
 
 /// Single component of a [`crate::kde::KernelDensityEstimator`].
 #[derive(Copy, Clone, Debug)]
@@ -27,7 +30,7 @@ impl<K, P> Component<K, P> {
     /// Kernel should be standardized because distances to the neighbors are used as bandwidths.
     pub(crate) fn from_triple(kernel: K, triple: Triple<P>) -> Option<Self>
     where
-        P: Copy + Ord + Sub<P, Output = P>,
+        P: Copy + Ord + Additive,
     {
         match triple {
             // For the middle point we take the maximum of the two distances:
@@ -57,9 +60,9 @@ impl<K, P> Component<K, P> {
 impl<K, P, D> Density<P, D> for Component<K, P>
 where
     K: Density<P, D>,
-    P: Copy + Debug + Div<Output = P> + Sub<Output = P> + TryInto<D>,
+    P: Copy + Debug + Additive + Multiplicative + TryInto<D>,
     <P as TryInto<D>>::Error: Debug,
-    D: Div<Output = D>,
+    D: Multiplicative,
 {
     fn density(&self, at: P) -> D {
         self.kernel.density((at - self.location) / self.bandwidth)
@@ -70,7 +73,7 @@ where
 impl<K, P> Sample<P> for Component<K, P>
 where
     K: Sample<P>,
-    P: Add<Output = P> + Copy + Mul<Output = P>,
+    P: Copy + Additive + Multiplicative,
 {
     fn sample(&self, rng: &mut Rng) -> P {
         self.kernel.sample(rng) * self.bandwidth + self.location
@@ -87,7 +90,7 @@ impl<P> Component<crate::kernel::continuous::Uniform, P> {
     /// This function panics if location or bandwidth cannot be represented with the parameter type.
     pub fn new(min: P, max: P) -> Self
     where
-        P: Add<Output = P> + Copy + Div<Output = P> + Sub<Output = P> + num_traits::FromPrimitive,
+        P: Additive + Copy + Multiplicative + num_traits::FromPrimitive,
     {
         Self {
             kernel: crate::kernel::continuous::Uniform,

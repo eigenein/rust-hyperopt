@@ -1,14 +1,15 @@
 //! Kernel density estimator implementation.
 
-use std::{
-    fmt::Debug,
-    ops::{Add, Div},
-};
+use std::fmt::Debug;
 
 use fastrand::Rng;
 
 pub use self::component::Component;
-use crate::{Density, Sample};
+use crate::{
+    traits::{Additive, Multiplicative},
+    Density,
+    Sample,
+};
 
 mod component;
 
@@ -29,7 +30,7 @@ where
     C: Iterator + Clone,
     C::Item: Density<P, D>,
     P: Copy,
-    D: Add<Output = D> + Div<Output = D> + num_traits::FromPrimitive + num_traits::Zero,
+    D: Additive + Multiplicative + num_traits::FromPrimitive + num_traits::Zero,
 {
     /// Calculate the KDE's density at the specified point.
     ///

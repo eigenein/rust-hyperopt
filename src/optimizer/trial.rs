@@ -3,12 +3,12 @@ use std::{
     fmt::Debug,
     iter,
     iter::Copied,
-    ops::Sub,
 };
 
 use crate::{
     iter::Triples,
     kde::{Component, KernelDensityEstimator},
+    traits::Additive,
 };
 
 /// Single trial in the optimizer.
@@ -142,7 +142,7 @@ impl<P, M> Trials<P, M> {
         kernel: K,
     ) -> KernelDensityEstimator<impl Iterator<Item = Component<K, P>> + Clone + 'a>
     where
-        P: Copy + Ord + Sub<P, Output = P>,
+        P: Copy + Ord + Additive,
         K: Copy + 'a,
     {
         KernelDensityEstimator(
