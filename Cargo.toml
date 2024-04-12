@@ -35,6 +35,8 @@ module_name_repetitions = "allow"
 
 [dependencies]
 fastrand = "2.0.2"
+num-integer = "0.1.46"
+num-iter = "0.1.44"
 num-traits = "0.2.18"
 
 [dev-dependencies]

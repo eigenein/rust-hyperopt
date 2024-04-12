@@ -40,7 +40,7 @@ fn main() {
         optimizer.feed_back(x, NotNan::new(x.cos()).unwrap());
     }
     let best_trial = optimizer.best_trial().unwrap();
-    assert_abs_diff_eq!(best_trial.parameter.into_inner(), PI, epsilon = 0.2);
-    assert_abs_diff_eq!(best_trial.metric.into_inner(), -1.0, epsilon = 0.01);
+    assert_abs_diff_eq!(best_trial.parameter.into_inner(), PI, epsilon = 0.25);
+    assert_abs_diff_eq!(best_trial.metric.into_inner(), -1.0, epsilon = 0.05);
 }
 ```

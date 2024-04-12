@@ -93,8 +93,8 @@ impl<KFirst, K, P, M> Optimizer<KFirst, K, P, M> {
     )]
     pub fn feed_back(&mut self, parameter: P, metric: M)
     where
-        P: Copy + Ord,
-        M: Ord,
+        P: Copy + Debug + Ord,
+        M: Debug + Ord,
     {
         let n_expected_good_trials = {
             // `+ 1` is for this new trial.
@@ -127,14 +127,17 @@ impl<KFirst, K, P, M> Optimizer<KFirst, K, P, M> {
         }
 
         // Verify the invariant:
-        debug_assert!(
-            !self
-                .good_trials
-                .worst()
-                .zip(self.bad_trials.best())
-                .is_some_and(|(worst_good, best_bad)| worst_good > best_bad),
-            "the worst good trial should not be worse than the best bad trial",
-        );
+        #[cfg(debug_assertions)]
+        {
+            if let (Some(worst_good), Some(best_bad)) =
+                (self.good_trials.worst(), self.bad_trials.best())
+            {
+                assert!(
+                    worst_good <= best_bad,
+                    "the worst good trial `{worst_good:?}` must not be worse than the best bad trial `{best_bad:?}`",
+                );
+            }
+        }
     }
 
     /// Generate a parameter value for a new trial.

@@ -1,10 +1,16 @@
+mod binomial;
 mod epanechnikov;
 mod gaussian;
 mod uniform;
 
 use fastrand::Rng;
 
-pub use self::{epanechnikov::Epanechnikov, gaussian::Gaussian, uniform::Uniform};
+pub use self::{
+    binomial::Binomial,
+    epanechnikov::Epanechnikov,
+    gaussian::Gaussian,
+    uniform::Uniform,
+};
 
 /// [Kernel][1] density function.
 ///
