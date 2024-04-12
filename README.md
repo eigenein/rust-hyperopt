@@ -36,7 +36,7 @@ fn main() {
     let mut x = OrderedFloat(f64::NAN);
     for _ in 0..100 {
         x = optimizer.new_trial(&mut rng);
-        println!("x = {x}");
+        println!("x = {x}, metric = {}", x.cos());
         optimizer.feed_back(x, OrderedFloat(x.cos()));
     }
     println!("optimizer = {optimizer:?}");

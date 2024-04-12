@@ -1,4 +1,4 @@
-use std::{iter, ops::RangeInclusive};
+use std::{fmt::Debug, iter, ops::RangeInclusive};
 
 use crate::{
     kde::Component,
@@ -98,24 +98,24 @@ impl<KFirst, K, P, M> Optimizer<KFirst, K, P, M> {
         if self
             .good_trials
             .worst()
-            .is_some_and(|worst_good_trial| metric > worst_good_trial.metric)
+            .is_some_and(|worst_good_trial| metric <= worst_good_trial.metric)
         {
-            self.bad_trials.insert(Trial { metric, parameter });
-            while self.good_trials.len() < n_expected_good_trials {
-                let best_bad_trial = self
-                    .bad_trials
-                    .pop_best()
-                    .expect("there should be a bad trial");
-                self.good_trials.insert(best_bad_trial);
+            if self.good_trials.insert(Trial { metric, parameter }) {
+                while self.good_trials.len() > n_expected_good_trials {
+                    self.bad_trials.insert(
+                        self.good_trials
+                            .pop_worst()
+                            .expect("there should be a good trial"),
+                    );
+                }
             }
-        } else {
-            self.good_trials.insert(Trial { metric, parameter });
-            while self.good_trials.len() > n_expected_good_trials {
-                let worst_good_trial = self
-                    .good_trials
-                    .pop_worst()
-                    .expect("there should be a good trial");
-                self.bad_trials.insert(worst_good_trial);
+        } else if self.bad_trials.insert(Trial { metric, parameter }) {
+            while self.good_trials.len() < n_expected_good_trials {
+                self.good_trials.insert(
+                    self.bad_trials
+                        .pop_best()
+                        .expect("there should be a bad trial"),
+                );
             }
         }
 
@@ -124,7 +124,7 @@ impl<KFirst, K, P, M> Optimizer<KFirst, K, P, M> {
                 .good_trials
                 .worst()
                 .zip(self.bad_trials.best())
-                .is_some_and(|(lhs, rhs)| lhs <= rhs)
+                .is_some_and(|(worst_good, best_bad)| worst_good > best_bad),
         );
     }
 
