@@ -22,7 +22,7 @@ use ordered_float::NotNan;
 
 use hyperopt::Optimizer;
 use hyperopt::kde::Component;
-use hyperopt::kernel::{Epanechnikov, Uniform};
+use hyperopt::kernel::continuous::{Epanechnikov, Uniform};
 
 fn main() {
     let min = NotNan::new(FRAC_PI_2).unwrap();

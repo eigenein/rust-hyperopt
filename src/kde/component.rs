@@ -9,7 +9,6 @@ use crate::{
     consts::f64::DOUBLE_SQRT_3,
     convert::{UnsafeFromPrimitive, UnsafeInto},
     iter::Triple,
-    kernel::Uniform,
     Density,
     Sample,
 };
@@ -82,7 +81,7 @@ where
     }
 }
 
-impl<P> Component<Uniform, P> {
+impl<P> Component<crate::kernel::continuous::Uniform, P> {
     /// Create a new component with the uniform kernel function.
     ///
     /// The kernel will be scaled and moved so that the «box» spans the specified range.
@@ -92,7 +91,7 @@ impl<P> Component<Uniform, P> {
         P: Add<Output = P> + Copy + Div<Output = P> + Sub<Output = P> + UnsafeFromPrimitive<f64>,
     {
         Self {
-            kernel: Uniform,
+            kernel: crate::kernel::continuous::Uniform,
             location: (min + max) / P::unsafe_from_primitive(2.0),
             bandwidth: (max - min) / P::unsafe_from_primitive(DOUBLE_SQRT_3),
         }

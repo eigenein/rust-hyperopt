@@ -77,7 +77,7 @@ mod tests {
     use std::iter;
 
     use super::*;
-    use crate::{consts::f64::SQRT_3, kernel::Uniform};
+    use crate::{consts::f64::SQRT_3, kernel::continuous::Uniform};
 
     #[test]
     fn sample_single_component_ok() {

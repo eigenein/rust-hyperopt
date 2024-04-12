@@ -55,8 +55,7 @@ impl<P, D> Binomial<P, D> {
                 *acc = *acc + self.pmf(at);
                 Some((at, *acc))
             })
-            .skip_while(|(_, acc)| *acc < cdf)
-            .next()
+            .find(|(_, acc)| *acc >= cdf)
             .expect("there should be a next sample")
             .0
     }
@@ -105,15 +104,11 @@ mod tests {
     #[test]
     fn cdf_ok() {
         assert_eq!(Binomial { n: 20, p: 0.5 }.inverse_cdf(0.588), 10);
-        assert_eq!(Binomial { n: 20, p: 0.5 }.inverse_cdf(0.020694), 5);
+        assert_eq!(Binomial { n: 20, p: 0.5 }.inverse_cdf(0.020_694), 5);
     }
 
     #[test]
     fn std_ok() {
-        assert_abs_diff_eq!(
-            Binomial { n: 20, p: 0.5 }.std(),
-            2.23607,
-            epsilon = 0.00001
-        );
+        assert_abs_diff_eq!(Binomial { n: 20, p: 0.5 }.std(), 2.23607, epsilon = 0.00001);
     }
 }
