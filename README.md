@@ -39,8 +39,13 @@ fn main() {
         let x = optimizer.new_trial::<NotNan<f64>>(&mut rng);
         optimizer.feed_back(x, NotNan::new(x.cos()).unwrap());
     }
+
     let best_trial = optimizer.best_trial().unwrap();
     assert_abs_diff_eq!(best_trial.parameter.into_inner(), PI, epsilon = 0.25);
     assert_abs_diff_eq!(best_trial.metric.into_inner(), -1.0, epsilon = 0.05);
 }
 ```
+
+### Discrete
+
+![TODO](https://img.shields.io/badge/TODO-red?style=for-the-badge)
