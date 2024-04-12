@@ -2,6 +2,8 @@ mod epanechnikov;
 mod gaussian;
 mod uniform;
 
+use fastrand::Rng;
+
 pub use self::{epanechnikov::Epanechnikov, gaussian::Gaussian, uniform::Uniform};
 
 /// [Kernel][1] density function.
@@ -16,8 +18,8 @@ pub trait Density<T> {
 /// Sampler from [kernel][1] function.
 ///
 /// [1]: https://en.wikipedia.org/wiki/Kernel_(statistics)
-pub trait Sample<T, RNG> {
+pub trait Sample<T> {
     /// Generate a random sample.
     #[must_use]
-    fn sample(&self, rng: &mut RNG) -> T;
+    fn sample(&self, rng: &mut Rng) -> T;
 }

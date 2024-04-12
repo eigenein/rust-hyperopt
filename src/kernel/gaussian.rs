@@ -1,9 +1,10 @@
 use std::f64::consts::TAU;
 
+use fastrand::Rng;
+
 use crate::{
     consts::f64::FRAC_1_SQRT_TAU,
     kernel::{Density, Sample},
-    rand::Rand,
 };
 
 /// [Gaussian][1] kernel.
@@ -18,18 +19,17 @@ impl<T: num_traits::Float> Density<T> for Gaussian {
     }
 }
 
-impl<T, RNG> Sample<T, RNG> for Gaussian
+impl<T> Sample<T> for Gaussian
 where
     T: num_traits::Float,
-    RNG: Rand<f64>,
 {
     /// [Generate a sample][1] from the Gaussian kernel.
     ///
     /// [1]: https://en.wikipedia.org/wiki/Box–Muller_transform
-    fn sample(&self, rng: &mut RNG) -> T {
-        let u1 = T::from(Rand::uniform(rng)).unwrap();
-        let u2 = T::from(Rand::uniform(rng)).unwrap();
-        (T::from(-2.0).unwrap() * u1.ln()).sqrt() * (T::from(TAU).unwrap() * u2).cos()
+    fn sample(&self, rng: &mut Rng) -> T {
+        let u1 = rng.f64();
+        let u2 = rng.f64();
+        T::from((-2.0 * u1.ln()).sqrt() * (TAU * u2).cos()).unwrap()
     }
 }
 

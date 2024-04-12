@@ -1,7 +1,7 @@
-use std::ops::RangeInclusive;
+use fastrand::Rng;
 
 pub use self::component::Component;
-use crate::{rand::UniformRange, Density, Sample};
+use crate::{Density, Sample};
 
 mod component;
 
@@ -39,12 +39,11 @@ where
     }
 }
 
-impl<T, C, Rng> Sample<Option<T>, Rng> for KernelDensityEstimator<C>
+impl<T, C> Sample<Option<T>> for KernelDensityEstimator<C>
 where
     T: num_traits::Num,
     C: Iterator + Clone,
-    C::Item: Sample<T, Rng>,
-    Rng: UniformRange<RangeInclusive<usize>, usize>,
+    C::Item: Sample<T>,
 {
     /// Sample a random point from the KDE.
     ///
@@ -59,7 +58,7 @@ where
             .0
             .clone()
             .enumerate()
-            .filter(|(i, _)| rng.uniform_range(0..=*i) == 0)
+            .filter(|(i, _)| rng.usize(0..=*i) == 0)
             .last()?
             .1
             .sample(rng);

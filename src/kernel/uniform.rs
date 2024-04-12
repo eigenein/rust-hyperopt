@@ -1,7 +1,8 @@
+use fastrand::Rng;
+
 use crate::{
     consts::f64::{DOUBLE_SQRT_3, SQRT_3},
     kernel::{Density, Sample},
-    rand::Rand,
 };
 
 /// Normalized uniform kernel, also known as «boxcar function».
@@ -18,15 +19,12 @@ impl<T: num_traits::Float> Density<T> for Uniform {
     }
 }
 
-impl<T, RNG> Sample<T, RNG> for Uniform
+impl<T> Sample<T> for Uniform
 where
     T: num_traits::Float,
-    RNG: Rand<f64>,
 {
     /// Generate a sample from the uniform kernel.
-    fn sample(&self, rng: &mut RNG) -> T {
-        T::from(rng.uniform())
-            .unwrap()
-            .mul_add(T::from(DOUBLE_SQRT_3).unwrap(), T::from(-SQRT_3).unwrap())
+    fn sample(&self, rng: &mut Rng) -> T {
+        T::from(rng.f64().mul_add(DOUBLE_SQRT_3, -SQRT_3)).unwrap()
     }
 }

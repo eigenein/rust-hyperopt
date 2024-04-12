@@ -1,5 +1,7 @@
 use std::ops::Sub;
 
+use fastrand::Rng;
+
 use crate::{consts::f64::DOUBLE_SQRT_3, iter::Triple, kernel::Uniform, Density, Sample};
 
 /// Single component of a [`crate::kde::KernelDensityEstimator`].
@@ -59,9 +61,9 @@ where
     }
 }
 
-impl<K, T, Rng> Sample<T, Rng> for Component<K, T>
+impl<K, T> Sample<T> for Component<K, T>
 where
-    K: Sample<T, Rng>,
+    K: Sample<T>,
     T: Copy + num_traits::Num,
 {
     fn sample(&self, rng: &mut Rng) -> T {

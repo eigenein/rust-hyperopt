@@ -1,9 +1,10 @@
-use std::{fmt::Debug, iter, ops::RangeInclusive};
+use std::{fmt::Debug, iter};
+
+use fastrand::Rng;
 
 use crate::{
     kde::Component,
     optimizer::trial::{Trial, Trials},
-    rand::UniformRange,
     Density,
     Sample,
 };
@@ -135,12 +136,11 @@ impl<KFirst, K, P, M> Optimizer<KFirst, K, P, M> {
     ///
     /// Abandon hope, all ye who enter here!
     #[allow(clippy::missing_panics_doc)]
-    pub fn new_trial<Rng>(&self, rng: &mut Rng) -> P
+    pub fn new_trial(&self, rng: &mut Rng) -> P
     where
-        KFirst: Copy + Density<P> + Sample<P, Rng>,
-        K: Copy + Density<P> + Sample<P, Rng>,
+        KFirst: Copy + Density<P> + Sample<P>,
+        K: Copy + Density<P> + Sample<P>,
         P: Copy + Ord + num_traits::FromPrimitive + num_traits::Num,
-        Rng: UniformRange<RangeInclusive<usize>, usize>,
     {
         // Okay… Slow breath in… and out…
         // First, construct the KDEs:
@@ -149,7 +149,7 @@ impl<KFirst, K, P, M> Optimizer<KFirst, K, P, M> {
 
         // Now, sample candidates:
         let candidates = iter::from_fn(|| {
-            if self.good_trials.len() < 2 || rng.uniform_range(0..=self.good_trials.len()) == 0 {
+            if self.good_trials.len() < 2 || rng.usize(0..=self.good_trials.len()) == 0 {
                 // Select from the first component, if the good KDE is empty or with probability `1 / (n + 1)`.
                 Some(self.init_component.sample(rng))
             } else {
