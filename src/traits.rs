@@ -27,12 +27,12 @@ impl<T, Rhs, Output> Multiplicative<Rhs, Output> for T where
 /// Do not confuse it with a random number generator.
 ///
 /// [1]: pub trait Ring<Rhs = Self, Output = Self>:
-pub trait Rng<Rhs = Self, Output = Self>:
+pub trait NumRng<Rhs = Self, Output = Self>:
     Additive<Rhs, Output> + Multiplicative<Rhs, Output> + Neg<Output = Output>
 {
 }
 
-impl<T, Rhs, Output> Rng<Rhs, Output> for T where
+impl<T, Rhs, Output> NumRng<Rhs, Output> for T where
     T: Additive<Rhs, Output> + Multiplicative<Rhs, Output> + Neg<Output = Output>
 {
 }
@@ -40,12 +40,12 @@ impl<T, Rhs, Output> Rng<Rhs, Output> for T where
 /// Shortcut for [ring][1] of numbers.
 ///
 /// [1]: https://en.wikipedia.org/wiki/Ring_(mathematics)
-pub trait Ring<Rhs = Self, Output = Self>:
-    Rng<Rhs, Output> + num_traits::Zero + num_traits::One
+pub trait NumRing<Rhs = Self, Output = Self>:
+    NumRng<Rhs, Output> + num_traits::Zero + num_traits::One
 {
 }
 
-impl<T, Rhs, Output> Ring<Rhs, Output> for T where
-    T: Rng<Rhs, Output> + num_traits::Zero + num_traits::One
+impl<T, Rhs, Output> NumRing<Rhs, Output> for T where
+    T: NumRng<Rhs, Output> + num_traits::Zero + num_traits::One
 {
 }
