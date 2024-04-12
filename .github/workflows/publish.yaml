@@ -1,0 +1,36 @@
+name: ✨ Publish
+run-name: 🔖 Publish ${{ github.ref_name }}
+
+on:
+  release:
+    types: ["published"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: 🏗 Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📝 Build changelog
+        id: changelog
+        uses: Bullrich/generate-release-changelog@master
+        env:
+          REPO: ${{ github.repository }}
+
+      - name: 📝 Update release
+        uses: tubone24/update_release@v1.3.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_name: ${{ github.ref_name }}
+          body: ${{ steps.changelog.outputs.changelog }}
