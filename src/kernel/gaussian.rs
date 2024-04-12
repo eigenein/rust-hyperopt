@@ -1,9 +1,10 @@
-use std::f64::consts::TAU;
+use std::{f64::consts::TAU, fmt::Debug};
 
 use fastrand::Rng;
 
 use crate::{
     consts::f64::FRAC_1_SQRT_TAU,
+    convert::UnsafeInto,
     kernel::{Density, Sample},
 };
 
@@ -15,26 +16,27 @@ pub struct Gaussian;
 
 impl<P, D> Density<P, D> for Gaussian
 where
-    P: num_traits::Float,
-    D: num_traits::Float,
+    P: Debug + UnsafeInto<D> + num_traits::Float,
+    f64: UnsafeInto<P>,
 {
     fn density(&self, at: P) -> D {
-        D::from(FRAC_1_SQRT_TAU).unwrap()
-            * (D::from(-0.5).unwrap() * D::from(at * at).unwrap()).exp()
+        (UnsafeInto::<P>::unsafe_into(FRAC_1_SQRT_TAU)
+            * (UnsafeInto::<P>::unsafe_into(-0.5) * at * at).exp())
+        .unsafe_into()
     }
 }
 
-impl<T> Sample<T> for Gaussian
+impl<P> Sample<P> for Gaussian
 where
-    T: num_traits::Float,
+    f64: UnsafeInto<P>,
 {
     /// [Generate a sample][1] from the Gaussian kernel.
     ///
     /// [1]: https://en.wikipedia.org/wiki/Box–Muller_transform
-    fn sample(&self, rng: &mut Rng) -> T {
+    fn sample(&self, rng: &mut Rng) -> P {
         let u1 = rng.f64();
         let u2 = rng.f64();
-        T::from((-2.0 * u1.ln()).sqrt() * (TAU * u2).cos()).unwrap()
+        ((-2.0 * u1.ln()).sqrt() * (TAU * u2).cos()).unsafe_into()
     }
 }
 

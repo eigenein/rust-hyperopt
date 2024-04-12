@@ -1,8 +1,13 @@
-use std::{fmt::Debug, iter};
+use std::{
+    fmt::Debug,
+    iter,
+    ops::{Add, Div, Mul, Sub},
+};
 
 use fastrand::Rng;
 
 use crate::{
+    convert::UnsafeInto,
     kde::Component,
     optimizer::trial::{Trial, Trials},
     Density,
@@ -134,16 +139,28 @@ impl<KFirst, K, P, M> Optimizer<KFirst, K, P, M> {
     /// After evaluating the target function with this parameter,
     /// you'd better feed the metric back with [`Optimizer::feed_back`].
     ///
-    /// Abandon hope, all ye who enter here!
+    /// # Type parameters
+    ///
+    /// - [`D`]: kernel density type
     #[allow(clippy::missing_panics_doc)]
     pub fn new_trial<D>(&self, rng: &mut Rng) -> P
     where
         KFirst: Copy + Density<P, D> + Sample<P>,
         K: Copy + Density<P, D> + Sample<P>,
-        P: Copy + Ord + num_traits::Num + num_traits::ToPrimitive,
-        D: Copy + Ord + num_traits::Float,
+        P: Add<Output = P>
+            + Copy
+            + Debug
+            + Div<Output = P>
+            + Mul<Output = P>
+            + Ord
+            + Sub<Output = P>
+            + UnsafeInto<D>,
+        D: Add<Output = D> + Copy + Div<Output = D> + Mul<Output = D> + Ord + num_traits::Zero,
+        f64: UnsafeInto<D>,
     {
+        // Abandon hope, all ye who enter here!
         // Okay… Slow breath in… and out…
+
         // First, construct the KDEs:
         let good_kde = self.good_trials.to_kde(self.kernel);
         let bad_kde = self.bad_trials.to_kde(self.kernel);
@@ -171,11 +188,11 @@ impl<KFirst, K, P, M> Optimizer<KFirst, K, P, M> {
                 // Use weighted average of the initial component and KDE:
                 let init_density = self.init_component.density(parameter);
                 let l = (init_density
-                    + good_kde.density(parameter) * D::from(self.good_trials.len()).unwrap())
-                    / D::from(self.good_trials.len() + 1).unwrap();
+                    + good_kde.density(parameter) * (self.good_trials.len() as f64).unsafe_into())
+                    / ((self.good_trials.len() + 1) as f64).unsafe_into();
                 let g = (init_density
-                    + bad_kde.density(parameter) * D::from(self.bad_trials.len()).unwrap())
-                    / D::from(self.bad_trials.len() + 1).unwrap();
+                    + bad_kde.density(parameter) * (self.bad_trials.len() as f64).unsafe_into())
+                    / ((self.bad_trials.len() + 1) as f64).unsafe_into();
                 (parameter, l / g)
             })
             .take(self.n_candidates);

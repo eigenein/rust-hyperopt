@@ -1,7 +1,12 @@
+use std::{
+    fmt::Debug,
+    ops::{Add, Div},
+};
+
 use fastrand::Rng;
 
 pub use self::component::Component;
-use crate::{Density, Sample};
+use crate::{convert::UnsafeInto, Density, Sample};
 
 mod component;
 
@@ -20,7 +25,8 @@ where
     C: Iterator + Clone,
     C::Item: Density<P, D>,
     P: Copy,
-    D: num_traits::Float,
+    D: Add<Output = D> + Div<Output = D> + num_traits::Zero,
+    f64: UnsafeInto<D>,
 {
     /// Calculate the KDE's density at the specified point.
     ///
@@ -35,14 +41,13 @@ where
         if n_points == 0 {
             D::zero()
         } else {
-            sum / D::from(n_points).unwrap()
+            sum / (n_points as f64).unsafe_into()
         }
     }
 }
 
 impl<T, C> Sample<Option<T>> for KernelDensityEstimator<C>
 where
-    T: num_traits::Num,
     C: Iterator + Clone,
     C::Item: Sample<T>,
 {
@@ -82,7 +87,7 @@ mod tests {
             bandwidth: 1.0,
         };
         let kde = KernelDensityEstimator(iter::once(component));
-        let mut rng = fastrand::Rng::new();
+        let mut rng = Rng::new();
 
         let sample = kde.sample(&mut rng).unwrap();
         assert!((-SQRT_3..=SQRT_3).contains(&sample));

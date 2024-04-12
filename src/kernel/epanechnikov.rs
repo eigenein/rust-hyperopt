@@ -1,7 +1,13 @@
+use std::{
+    fmt::Debug,
+    ops::{Add, Div, Mul, Neg, Sub},
+};
+
 use fastrand::Rng;
 
 use crate::{
     consts::f64::SQRT_5,
+    convert::UnsafeInto,
     kernel::{Density, Sample},
 };
 
@@ -13,26 +19,37 @@ pub struct Epanechnikov;
 
 impl<P, D> Density<P, D> for Epanechnikov
 where
-    P: num_traits::Float,
-    D: num_traits::Float,
+    P: Copy
+        + Add<Output = P>
+        + Debug
+        + Div<Output = P>
+        + Mul<Output = P>
+        + Neg<Output = P>
+        + Sub<Output = P>
+        + UnsafeInto<D>
+        + num_traits::One,
+    D: Mul<Output = D>,
+    f64: UnsafeInto<P> + UnsafeInto<D>,
 {
     fn density(&self, at: P) -> D {
         // Scale to `-1..1`:
-        let at = at / P::from(SQRT_5).unwrap();
+        let at = at / SQRT_5.unsafe_into();
 
         // Calculate the density and normalize:
-        D::from(0.75 / SQRT_5).unwrap() * D::from(at.mul_add(-at, P::one())).unwrap()
+        UnsafeInto::<D>::unsafe_into(0.75 / SQRT_5)
+            * UnsafeInto::<D>::unsafe_into(P::one() - at * at)
     }
 }
 
-impl<T> Sample<T> for Epanechnikov
+impl<P> Sample<P> for Epanechnikov
 where
-    T: num_traits::Float,
+    P: Mul<Output = P>,
+    f64: UnsafeInto<P>,
 {
     /// [Generate a sample][1] from the Epanechnikov kernel.
     ///
     /// [1]: https://stats.stackexchange.com/questions/173637/generating-a-sample-from-epanechnikovs-kernel
-    fn sample(&self, rng: &mut Rng) -> T {
+    fn sample(&self, rng: &mut Rng) -> P {
         // Select the two smallest numbers of the three iid uniform samples:
         let (x1, x2) = min_2(rng.f64(), rng.f64(), rng.f64());
 
@@ -43,7 +60,7 @@ where
         let x = if rng.bool() { x } else { -x };
 
         // Scale to have a standard deviation of 1:
-        T::from(x).unwrap() * T::from(SQRT_5).unwrap()
+        UnsafeInto::<P>::unsafe_into(x) * UnsafeInto::<P>::unsafe_into(SQRT_5)
     }
 }
 

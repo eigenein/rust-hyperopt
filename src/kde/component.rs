@@ -1,8 +1,18 @@
-use std::ops::Sub;
+use std::{
+    fmt::Debug,
+    ops::{Add, Div, Mul, Sub},
+};
 
 use fastrand::Rng;
 
-use crate::{consts::f64::DOUBLE_SQRT_3, iter::Triple, kernel::Uniform, Density, Sample};
+use crate::{
+    consts::f64::DOUBLE_SQRT_3,
+    convert::UnsafeInto,
+    iter::Triple,
+    kernel::Uniform,
+    Density,
+    Sample,
+};
 
 /// Single component of a [`crate::kde::KernelDensityEstimator`].
 #[derive(Copy, Clone, Debug)]
@@ -54,35 +64,38 @@ impl<K, T> Component<K, T> {
 impl<K, P, D> Density<P, D> for Component<K, P>
 where
     K: Density<P, D>,
-    P: Copy + num_traits::Num + num_traits::ToPrimitive,
-    D: num_traits::Float,
+    P: Copy + Debug + Div<Output = P> + Sub<Output = P> + UnsafeInto<D>,
+    D: Div<Output = D>,
 {
     fn density(&self, at: P) -> D {
-        self.kernel.density((at - self.location) / self.bandwidth)
-            / D::from(self.bandwidth).unwrap()
+        self.kernel.density((at - self.location) / self.bandwidth) / self.bandwidth.unsafe_into()
     }
 }
 
-impl<K, T> Sample<T> for Component<K, T>
+impl<K, P> Sample<P> for Component<K, P>
 where
-    K: Sample<T>,
-    T: Copy + num_traits::Num,
+    K: Sample<P>,
+    P: Add<Output = P> + Copy + Mul<Output = P>,
 {
-    fn sample(&self, rng: &mut Rng) -> T {
+    fn sample(&self, rng: &mut Rng) -> P {
         self.kernel.sample(rng) * self.bandwidth + self.location
     }
 }
 
-impl<T: num_traits::Float> Component<Uniform, T> {
+impl<P> Component<Uniform, P> {
     /// Create a new component with the uniform kernel function.
     ///
     /// The kernel will be scaled and moved so that the «box» spans the specified range.
     #[allow(clippy::missing_panics_doc)]
-    pub fn new(min: T, max: T) -> Self {
+    pub fn new(min: P, max: P) -> Self
+    where
+        P: Add<Output = P> + Copy + Div<Output = P> + Sub<Output = P>,
+        f64: UnsafeInto<P>,
+    {
         Self {
             kernel: Uniform,
-            location: (min + max) / T::from(2.0).unwrap(),
-            bandwidth: (max - min) / T::from(DOUBLE_SQRT_3).unwrap(),
+            location: (min + max) / 2.0.unsafe_into(),
+            bandwidth: (max - min) / DOUBLE_SQRT_3.unsafe_into(),
         }
     }
 }
