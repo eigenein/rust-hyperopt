@@ -1,14 +1,14 @@
 #![allow(clippy::excessive_precision, clippy::unreadable_literal)]
 
-/// 1 / sqrt(2π)
+/// 1 / √2π
 pub const FRAC_1_SQRT_TAU: f64 =
     0.3989422804014326779399460599343818684758586311649346576659258296_f64;
 
-/// sqrt(3)
+/// √3
 pub const SQRT_3: f64 = 1.732050807568877293527446341505872367_f64;
 
-/// 2 * sqrt(3)
+/// 2√3
 pub const DOUBLE_SQRT_3: f64 = 2.0_f64 * SQRT_3;
 
-/// sqrt(5)
+/// √5
 pub const SQRT_5: f64 = 2.2360679774997896964091736687312762354406183596115257242708972454_f64;

@@ -21,22 +21,21 @@ use fastrand::Rng;
 use ordered_float::NotNan;
 
 use hyperopt::Optimizer;
-use hyperopt::kde::Component;
 use hyperopt::kernel::continuous::{Epanechnikov, Uniform};
 
 fn main() {
     let min = NotNan::new(FRAC_PI_2).unwrap();
     let max = NotNan::new(PI + FRAC_PI_2).unwrap();
     let mut optimizer = Optimizer::new(
-        min, max,                                         // parameter search range
-        Component::<Uniform, NotNan<f64>>::new(min, max), // our initial guess is just as bad
-        Epanechnikov,                                     // Epanechnikov kernel for the rescue 
+        min, max,                              // parameter search range
+        Uniform::<NotNan<f64>>::new(min, max), // our initial guess is just as bad
     );
 
     // Run 100 trials for the cosine function and try to find the point `(π, -1)`:
     let mut rng = Rng::new();
     for _ in 0..100 {
-        let x = optimizer.new_trial::<NotNan<f64>>(&mut rng);
+        // Generate new trials using Epanechnikov kernel:
+        let x = optimizer.new_trial::<Epanechnikov<_>, NotNan<f64>>(&mut rng);
         optimizer.feed_back(x, NotNan::new(x.cos()).unwrap());
     }
 

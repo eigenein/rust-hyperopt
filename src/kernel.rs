@@ -10,6 +10,8 @@ pub mod discrete;
 
 use fastrand::Rng;
 
+use crate::{iter::Triple, traits::Additive};
+
 /// Density function.
 ///
 /// # Type parameters
@@ -31,4 +33,30 @@ pub trait Sample<P> {
     /// Generate a random sample.
     #[must_use]
     fn sample(&self, rng: &mut Rng) -> P;
+}
+
+pub trait Kernel<P, D>: Density<P, D> + Sample<P> {
+    /// Construct a kernel with the given location and threshold.
+    #[must_use]
+    fn new(location: P, bandwidth: P) -> Self;
+
+    fn from_triple(triple: Triple<P>) -> Option<Self>
+    where
+        Self: Sized,
+        P: Copy + Ord + Additive,
+    {
+        match triple {
+            // For the middle point we take the maximum of the two distances:
+            Triple::Full(left, location, right) => Some(Kernel::new(
+                location,
+                (right - location).max(location - left),
+            )),
+
+            Triple::LeftMiddle(left, location) => Some(Self::new(location, location - left)),
+
+            Triple::MiddleRight(location, right) => Some(Self::new(location, right - location)),
+
+            _ => None,
+        }
+    }
 }

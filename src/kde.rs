@@ -4,14 +4,11 @@ use std::fmt::Debug;
 
 use fastrand::Rng;
 
-pub use self::component::Component;
 use crate::{
     traits::{Additive, Multiplicative},
     Density,
     Sample,
 };
-
-mod component;
 
 /// [Kernel density estimator][1].
 ///
@@ -86,12 +83,8 @@ mod tests {
 
     #[test]
     fn sample_single_component_ok() {
-        let component = Component {
-            kernel: Uniform,
-            location: 0.0,
-            bandwidth: 1.0,
-        };
-        let kde = KernelDensityEstimator(iter::once(component));
+        let kernel = Uniform::new(0.0, 1.0);
+        let kde = KernelDensityEstimator(iter::once(kernel));
         let mut rng = Rng::new();
 
         let sample = kde.sample(&mut rng).unwrap();

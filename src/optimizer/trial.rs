@@ -1,15 +1,10 @@
 use std::{
     collections::{btree_set::Iter, BTreeSet},
     fmt::Debug,
-    iter,
     iter::Copied,
 };
 
-use crate::{
-    iter::Triples,
-    kde::{Component, KernelDensityEstimator},
-    traits::Additive,
-};
+use crate::{iter::Triples, kde::KernelDensityEstimator, kernel::Kernel, traits::Additive};
 
 /// Single trial in the optimizer.
 ///
@@ -137,18 +132,15 @@ impl<P, M> Trials<P, M> {
     }
 
     /// Construct a [`KernelDensityEstimator`] from the trials.
-    pub fn to_kde<'a, K>(
+    pub fn to_kde<'a, K, D>(
         &'a self,
-        kernel: K,
-    ) -> KernelDensityEstimator<impl Iterator<Item = Component<K, P>> + Clone + 'a>
+    ) -> KernelDensityEstimator<impl Iterator<Item = K> + Clone + 'a>
     where
         P: Copy + Ord + Additive,
-        K: Copy + 'a,
+        K: Copy + Kernel<P, D> + 'a,
     {
         KernelDensityEstimator(
-            iter::repeat(kernel)
-                .zip(Triples::new(self.iter_parameters()))
-                .filter_map(|(kernel, triple)| Component::from_triple(kernel, triple)),
+            Triples::new(self.iter_parameters()).filter_map(|triple| K::from_triple(triple)),
         )
     }
 }

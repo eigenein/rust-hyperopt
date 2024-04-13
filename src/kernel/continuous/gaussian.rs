@@ -4,35 +4,69 @@ use fastrand::Rng;
 
 use crate::{
     consts::f64::FRAC_1_SQRT_TAU,
-    kernel::{Density, Sample},
+    kernel::{Density, Kernel, Sample},
+    traits::NumRng,
 };
 
 /// [Gaussian][1] kernel.
 ///
 /// [1]: https://en.wikipedia.org/wiki/Normal_distribution
 #[derive(Copy, Clone, Debug)]
-pub struct Gaussian;
+pub struct Gaussian<T> {
+    location: T,
+    bandwidth: T,
+}
 
-impl<T> Density<T, T> for Gaussian
+impl<T> Density<T, T> for Gaussian<T>
 where
     T: Debug + num_traits::Float + num_traits::FromPrimitive,
 {
     fn density(&self, at: T) -> T {
-        T::from_f64(FRAC_1_SQRT_TAU).unwrap() * (T::from_f64(-0.5).unwrap() * at * at).exp()
+        let normalized = (at - self.location) / self.bandwidth;
+        T::from_f64(FRAC_1_SQRT_TAU).unwrap()
+            * (T::from_f64(-0.5).unwrap() * normalized * normalized).exp()
+            / self.bandwidth
     }
 }
 
-impl<P> Sample<P> for Gaussian
+impl<T> Sample<T> for Gaussian<T>
 where
-    P: num_traits::FromPrimitive,
+    T: Copy + NumRng + num_traits::FromPrimitive,
 {
     /// [Generate a sample][1] from the Gaussian kernel.
     ///
     /// [1]: https://en.wikipedia.org/wiki/Box–Muller_transform
-    fn sample(&self, rng: &mut Rng) -> P {
+    fn sample(&self, rng: &mut Rng) -> T {
         let u1 = rng.f64();
         let u2 = rng.f64();
-        P::from_f64((-2.0 * u1.ln()).sqrt() * (TAU * u2).cos()).unwrap()
+        let normalized = T::from_f64((-2.0 * u1.ln()).sqrt() * (TAU * u2).cos()).unwrap();
+        self.location + self.bandwidth * normalized
+    }
+}
+
+impl<T> Kernel<T, T> for Gaussian<T>
+where
+    T: Copy + Debug + NumRng + num_traits::FromPrimitive + num_traits::Float,
+{
+    fn new(location: T, bandwidth: T) -> Self {
+        debug_assert!(bandwidth > T::zero());
+        Self {
+            location,
+            bandwidth,
+        }
+    }
+}
+
+impl<T> Default for Gaussian<T>
+where
+    T: num_traits::Zero + num_traits::One,
+{
+    /// Zero-centered standard normal distribution.
+    fn default() -> Self {
+        Self {
+            location: T::zero(),
+            bandwidth: T::one(),
+        }
     }
 }
 
@@ -44,17 +78,9 @@ mod tests {
 
     #[test]
     fn density_ok() {
-        assert_abs_diff_eq!(
-            Density::<f64, f64>::density(&Gaussian, 0.0),
-            0.398_942_280_401_432_7,
-        );
-        assert_abs_diff_eq!(
-            Density::<f64, f64>::density(&Gaussian, 1.0),
-            0.241_970_724_519_143_37,
-        );
-        assert_abs_diff_eq!(
-            Density::<f64, f64>::density(&Gaussian, -1.0),
-            0.241_970_724_519_143_37,
-        );
+        let kernel = Gaussian::default();
+        assert_abs_diff_eq!(kernel.density(0.0), 0.398_942_280_401_432_7,);
+        assert_abs_diff_eq!(kernel.density(1.0), 0.241_970_724_519_143_37,);
+        assert_abs_diff_eq!(kernel.density(-1.0), 0.241_970_724_519_143_37,);
     }
 }
