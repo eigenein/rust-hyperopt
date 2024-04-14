@@ -21,14 +21,15 @@ use fastrand::Rng;
 use ordered_float::NotNan;
 
 use hyperopt::Optimizer;
-use hyperopt::kernel::continuous::{Epanechnikov, Uniform};
+use hyperopt::kernel::continuous::Epanechnikov;
+use hyperopt::kernel::universal::Uniform;
 
 fn main() {
     let min = NotNan::new(FRAC_PI_2).unwrap();
     let max = NotNan::new(PI + FRAC_PI_2).unwrap();
     let mut optimizer = Optimizer::new(
-        min, max,                              // parameter search range
-        Uniform::<NotNan<f64>>::new(min, max), // our initial guess is just as bad
+        min, max,                            // parameter search range
+        Uniform::<NotNan<f64>> { min, max }, // our initial guess is just as bad
     );
 
     // Run 100 trials for the cosine function and try to find the point `(π, -1)`:

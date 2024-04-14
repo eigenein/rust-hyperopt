@@ -79,16 +79,19 @@ mod tests {
     use std::iter;
 
     use super::*;
-    use crate::{consts::f64::SQRT_3, kernel::continuous::Uniform};
+    use crate::kernel::universal::Uniform;
 
     #[test]
     fn sample_single_component_ok() {
-        let kernel = Uniform::new(0.0, 1.0);
+        let kernel = Uniform {
+            min: -1.0,
+            max: -1.0,
+        };
         let kde = KernelDensityEstimator(iter::once(kernel));
         let mut rng = Rng::new();
 
         let sample = kde.sample(&mut rng).unwrap();
-        assert!((-SQRT_3..=SQRT_3).contains(&sample));
+        assert!((-1.0..=1.0).contains(&sample));
 
         // Ensure that the iterator can be reused.
         let _ = kde.sample(&mut rng).unwrap();

@@ -1,4 +1,5 @@
 use fastrand::Rng;
+use num_traits::real::Real;
 
 use crate::{
     consts::f64::{DOUBLE_SQRT_3, SQRT_3},
@@ -31,38 +32,66 @@ where
     }
 }
 
-impl Sample<usize> for Uniform<usize> {
-    fn sample(&self, rng: &mut Rng) -> usize {
-        rng.usize(self.min..=self.max)
-    }
+macro_rules! impl_sample_discrete {
+    ($type:ident) => {
+        impl Sample<$type> for Uniform<$type> {
+            fn sample(&self, rng: &mut Rng) -> $type {
+                rng.$type(self.min..=self.max)
+            }
+        }
+    };
 }
 
-impl Sample<f64> for Uniform<f64> {
-    fn sample(&self, rng: &mut Rng) -> f64 {
-        rng.f64().mul_add(self.max - self.min, self.max)
-    }
+impl_sample_discrete!(isize);
+impl_sample_discrete!(usize);
+impl_sample_discrete!(i8);
+impl_sample_discrete!(u8);
+impl_sample_discrete!(i16);
+impl_sample_discrete!(u16);
+impl_sample_discrete!(i32);
+impl_sample_discrete!(u32);
+impl_sample_discrete!(i64);
+impl_sample_discrete!(u64);
+impl_sample_discrete!(i128);
+impl_sample_discrete!(u128);
+
+macro_rules! impl_sample_continuous {
+    ($type:ident) => {
+        impl Sample<$type> for Uniform<$type> {
+            fn sample(&self, rng: &mut Rng) -> $type {
+                rng.$type().mul_add(self.max - self.min, self.min)
+            }
+        }
+
+        #[cfg(feature = "ordered-float")]
+        impl Sample<ordered_float::OrderedFloat<$type>>
+            for Uniform<ordered_float::OrderedFloat<$type>>
+        {
+            fn sample(&self, rng: &mut Rng) -> ordered_float::OrderedFloat<$type> {
+                ordered_float::OrderedFloat(rng.$type()).mul_add(self.max - self.min, self.min)
+            }
+        }
+
+        #[cfg(feature = "ordered-float")]
+        impl Sample<ordered_float::NotNan<$type>> for Uniform<ordered_float::NotNan<$type>> {
+            fn sample(&self, rng: &mut Rng) -> ordered_float::NotNan<$type> {
+                let normalized = unsafe { ordered_float::NotNan::new_unchecked(rng.$type()) };
+                normalized * (self.max - self.min) + self.min
+            }
+        }
+    };
 }
 
-#[cfg(feature = "ordered-float")]
-impl Sample<ordered_float::OrderedFloat<f32>> for Uniform<ordered_float::OrderedFloat<f32>> {
-    fn sample(&self, rng: &mut Rng) -> ordered_float::OrderedFloat<f32> {
-        ordered_float::OrderedFloat(rng.f32()) * (self.max - self.min) + self.max
-    }
-}
-
-#[cfg(feature = "ordered-float")]
-impl Sample<ordered_float::OrderedFloat<f64>> for Uniform<ordered_float::OrderedFloat<f64>> {
-    fn sample(&self, rng: &mut Rng) -> ordered_float::OrderedFloat<f64> {
-        ordered_float::OrderedFloat(rng.f64()) * (self.max - self.min) + self.max
-    }
-}
+impl_sample_continuous!(f32);
+impl_sample_continuous!(f64);
 
 impl<P, D> Kernel<P, D> for Uniform<P>
 where
     Self: Density<P, D> + Sample<P>,
-    P: Copy + Additive + Multiplicative + Into<f64> + From<f64>,
+    P: Copy + Additive + Multiplicative + Into<f64> + From<f64> + PartialOrd + num_traits::Zero,
 {
     fn new(location: P, bandwidth: P) -> Self {
+        debug_assert!(bandwidth > P::zero());
         Self {
             min: P::from(bandwidth.into().mul_add(-SQRT_3, location.into())),
             max: P::from(bandwidth.into().mul_add(SQRT_3, location.into())),

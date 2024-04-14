@@ -37,10 +37,11 @@ pub trait Sample<P> {
 }
 
 pub trait Kernel<P, D>: Density<P, D> + Sample<P> {
-    /// Construct a kernel with the given location and threshold.
+    /// Construct a kernel with the given location and bandwidth.
     #[must_use]
     fn new(location: P, bandwidth: P) -> Self;
 
+    /// Construct the kernel for the triple of adjacent trials.
     fn from_triple(triple: Triple<P>) -> Option<Self>
     where
         Self: Sized,
