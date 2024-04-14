@@ -1,10 +1,9 @@
 use fastrand::Rng;
-use ordered_float::OrderedFloat;
 
 use crate::{
     consts::f64::{DOUBLE_SQRT_3, SQRT_3},
     kernel::Kernel,
-    traits::{Additive, Multiplicative, NumRing, NumRng},
+    traits::{Additive, Multiplicative, NumRing},
     Density,
     Sample,
 };
@@ -45,16 +44,16 @@ impl Sample<f64> for Uniform<f64> {
 }
 
 #[cfg(feature = "ordered-float")]
-impl Sample<OrderedFloat<f32>> for Uniform<OrderedFloat<f32>> {
-    fn sample(&self, rng: &mut Rng) -> OrderedFloat<f32> {
-        OrderedFloat(rng.f32()) * (self.max - self.min) + self.max
+impl Sample<ordered_float::OrderedFloat<f32>> for Uniform<ordered_float::OrderedFloat<f32>> {
+    fn sample(&self, rng: &mut Rng) -> ordered_float::OrderedFloat<f32> {
+        ordered_float::OrderedFloat(rng.f32()) * (self.max - self.min) + self.max
     }
 }
 
 #[cfg(feature = "ordered-float")]
-impl Sample<OrderedFloat<f64>> for Uniform<OrderedFloat<f64>> {
-    fn sample(&self, rng: &mut Rng) -> OrderedFloat<f64> {
-        OrderedFloat(rng.f64()) * (self.max - self.min) + self.max
+impl Sample<ordered_float::OrderedFloat<f64>> for Uniform<ordered_float::OrderedFloat<f64>> {
+    fn sample(&self, rng: &mut Rng) -> ordered_float::OrderedFloat<f64> {
+        ordered_float::OrderedFloat(rng.f64()) * (self.max - self.min) + self.max
     }
 }
 
