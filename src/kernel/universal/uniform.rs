@@ -1,5 +1,4 @@
 use fastrand::Rng;
-use num_traits::real::Real;
 
 use crate::{
     consts::f64::{DOUBLE_SQRT_3, SQRT_3},
@@ -79,6 +78,7 @@ macro_rules! impl_sample_continuous {
             for Uniform<ordered_float::OrderedFloat<$type>>
         {
             fn sample(&self, rng: &mut Rng) -> ordered_float::OrderedFloat<$type> {
+                use num_traits::Float;
                 ordered_float::OrderedFloat(rng.$type()).mul_add(self.max - self.min, self.min)
             }
         }
