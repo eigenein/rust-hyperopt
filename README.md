@@ -73,3 +73,7 @@ fn main() {
     assert_eq!(best_trial.metric, -4);
 }
 ```
+
+## Features
+
+- `ordered-float` enables support for `OrderedFloat` and `NotNan` types
