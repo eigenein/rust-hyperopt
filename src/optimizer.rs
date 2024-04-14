@@ -1,4 +1,4 @@
-use std::{fmt::Debug, iter};
+use std::{fmt::Debug, iter, ops::RangeInclusive};
 
 use fastrand::Rng;
 
@@ -22,8 +22,7 @@ mod trial;
 /// - [`M`]: value of the target function, the less – the better
 #[derive(Debug)]
 pub struct Optimizer<KInit, P, M> {
-    min: P,
-    max: P,
+    range: RangeInclusive<P>,
     init_kernel: KInit,
     cutoff: f64,
     n_candidates: usize,
@@ -38,13 +37,12 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
     ///
     /// # Parameters
     ///
-    /// - `min` and `max`: parameter range, bounds are **included**
+    /// - `range`: parameter range
     /// - `init_kernel`: your prior belief about which values of the searched parameter is more optimal
     /// - `kernel`: kernel for the trial components
-    pub const fn new(min: P, max: P, init_kernel: KInit) -> Self {
+    pub const fn new(range: RangeInclusive<P>, init_kernel: KInit) -> Self {
         Self {
-            min,
-            max,
+            range,
             init_kernel,
             cutoff: 0.1,
             n_candidates: 25,
@@ -176,8 +174,8 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
         });
 
         // Clamp them to the bounds:
-        let valid_candidates =
-            candidates.map(|parameter| num_traits::clamp(parameter, self.min, self.max));
+        let valid_candidates = candidates
+            .map(|parameter| num_traits::clamp(parameter, *self.range.start(), *self.range.end()));
 
         // Filter out tried ones:
         let new_candidates = valid_candidates

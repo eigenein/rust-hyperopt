@@ -83,7 +83,7 @@ mod tests {
 
     #[test]
     fn sample_single_component_ok() {
-        let kernel = Uniform::with_bounds(-1.0, 1.0);
+        let kernel = Uniform::with_bounds(-1.0..=1.0);
         let kde = KernelDensityEstimator(iter::once(kernel));
         let mut rng = Rng::new();
 

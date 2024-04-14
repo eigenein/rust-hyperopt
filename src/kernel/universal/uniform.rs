@@ -1,3 +1,5 @@
+use std::ops::RangeInclusive;
+
 use fastrand::Rng;
 
 use crate::{
@@ -22,8 +24,8 @@ where
     P: PartialOrd,
 {
     /// Construct the kernel with specified **inclusive** bounds.
-    pub fn with_bounds(min: P, max: P) -> Self {
-        debug_assert!(min <= max);
+    pub fn with_bounds(range: RangeInclusive<P>) -> Self {
+        let (min, max) = range.into_inner();
         Self { min, max }
     }
 }

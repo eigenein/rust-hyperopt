@@ -28,8 +28,8 @@ fn main() {
     let min = NotNan::new(FRAC_PI_2).unwrap();
     let max = NotNan::new(PI + FRAC_PI_2).unwrap();
     let mut optimizer = Optimizer::new(
-        min, max,                                      // parameter search limits
-        Uniform::<NotNan<f64>>::with_bounds(min, max), // our initial guess is just as bad
+        min..=max,                                      // parameter search limits
+        Uniform::<NotNan<f64>>::with_bounds(min..=max), // our initial guess is just as bad
     );
 
     // Run 100 trials for the cosine function and try to find the point `(π, -1)`:
@@ -58,8 +58,8 @@ use hyperopt::kernel::universal::Uniform;
 
 fn main() {
     let mut optimizer = Optimizer::new(
-        -100, 100,
-        Uniform::with_bounds(-100, 100),
+        -100..=100,
+        Uniform::with_bounds(-100..=100),
     );
 
     let mut rng = Rng::with_seed(42);
