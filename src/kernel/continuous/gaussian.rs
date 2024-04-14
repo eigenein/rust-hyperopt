@@ -46,7 +46,8 @@ where
 
 impl<T> Kernel<T, T> for Gaussian<T>
 where
-    T: Copy + Debug + NumRng + num_traits::FromPrimitive + num_traits::Float,
+    Self: Density<T, T> + Sample<T>,
+    T: PartialOrd + num_traits::Zero,
 {
     fn new(location: T, bandwidth: T) -> Self {
         debug_assert!(bandwidth > T::zero());

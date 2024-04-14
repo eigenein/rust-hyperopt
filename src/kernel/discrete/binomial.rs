@@ -4,7 +4,12 @@ use fastrand::Rng;
 use num_integer::binomial;
 use num_iter::range_step_from;
 
-use crate::{kernel::Kernel, Density, Sample};
+use crate::{
+    kernel::Kernel,
+    traits::{Additive, Multiplicative},
+    Density,
+    Sample,
+};
 
 /// Discrete kernel function based on the [binomial distribution][1].
 ///
@@ -79,8 +84,9 @@ where
 
 impl<P, D> Kernel<P, D> for Binomial<P, D>
 where
-    P: Copy + Debug + Into<D> + MaxN + num_integer::Integer,
-    D: num_traits::Float + num_traits::FromPrimitive,
+    Self: Density<P, D> + Sample<P>,
+    P: Copy + Ord + MaxN + Additive + Multiplicative + Into<D> + num_traits::One,
+    D: Multiplicative,
 {
     fn new(location: P, bandwidth: P) -> Self {
         // Solving these for `p` and `n`:
@@ -100,7 +106,7 @@ where
         let n = (location * location / (location - sigma_squared)).clamp(P::one(), P::MAX_N);
         Self {
             n,
-            p: location.into() / n.into(),
+            p: Into::<D>::into(location) / Into::<D>::into(n),
         }
     }
 }

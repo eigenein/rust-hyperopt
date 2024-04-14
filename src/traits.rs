@@ -27,6 +27,7 @@ impl<T, Rhs, Output> Multiplicative<Rhs, Output> for T where
 /// Do not confuse it with a random number generator.
 ///
 /// [1]: https://en.wikipedia.org/wiki/Ring_(mathematics)#Variations_on_the_definition
+#[deprecated = "some types do not implement `Neg`"]
 pub trait NumRng<Rhs = Self, Output = Self>:
     Additive<Rhs, Output> + Multiplicative<Rhs, Output> + Neg<Output = Output>
 {

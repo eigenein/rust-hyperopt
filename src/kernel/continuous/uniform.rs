@@ -6,7 +6,9 @@ use crate::{
     traits::{NumRing, NumRng},
 };
 
-/// Normalized uniform kernel, also known as «boxcar function», over (-√3, +√3) range.
+/// Normalized uniform kernel, also known as «[boxcar function][1]», over (-σ√3, +σ√3) range.
+///
+/// [1]: https://en.wikipedia.org/wiki/Continuous_uniform_distribution#Probability_density_function
 #[derive(Copy, Clone, Debug)]
 pub struct Uniform<T> {
     location: T,
@@ -39,7 +41,7 @@ where
     fn density(&self, at: T) -> T {
         let normalized = (at - self.location) / self.bandwidth / T::from_f64(SQRT_3).unwrap();
         if (-T::one()..=T::one()).contains(&normalized) {
-            T::from_f64(1.0 / SQRT_3).unwrap() / self.bandwidth
+            T::from_f64(0.5 / SQRT_3).unwrap() / self.bandwidth
         } else {
             T::zero()
         }

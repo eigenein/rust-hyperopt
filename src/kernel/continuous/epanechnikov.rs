@@ -63,7 +63,8 @@ where
 
 impl<T> Kernel<T, T> for Epanechnikov<T>
 where
-    T: Copy + Debug + PartialOrd + NumRing + num_traits::FromPrimitive,
+    Self: Density<T, T> + Sample<T>,
+    T: PartialOrd + num_traits::Zero,
 {
     fn new(location: T, bandwidth: T) -> Self {
         debug_assert!(bandwidth > T::zero());
