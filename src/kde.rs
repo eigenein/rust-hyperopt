@@ -5,7 +5,7 @@ use std::fmt::Debug;
 use fastrand::Rng;
 
 use crate::{
-    traits::{Additive, Multiplicative},
+    traits::{SelfAdd, SelfDiv},
     Density,
     Sample,
 };
@@ -27,7 +27,7 @@ where
     C: Iterator + Clone,
     C::Item: Density<P, D>,
     P: Copy,
-    D: Additive + Multiplicative + num_traits::FromPrimitive + num_traits::Zero,
+    D: SelfAdd + SelfDiv + num_traits::FromPrimitive + num_traits::Zero,
 {
     /// Calculate the KDE's density at the specified point.
     ///

@@ -22,7 +22,6 @@ where
     T: SelfSub
         + Multiplicative
         + Copy
-        + Debug
         + PartialOrd
         + SelfNeg
         + num_traits::FromPrimitive

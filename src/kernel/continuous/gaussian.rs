@@ -19,7 +19,7 @@ pub struct Gaussian<T> {
 
 impl<T> Density<T, T> for Gaussian<T>
 where
-    T: Debug + num_traits::Float + num_traits::FromPrimitive,
+    T: num_traits::Float + num_traits::FromPrimitive,
 {
     fn density(&self, at: T) -> T {
         let normalized = (at - self.location) / self.bandwidth;

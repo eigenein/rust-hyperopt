@@ -154,15 +154,8 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
     where
         KInit: Copy + Density<P, D> + Sample<P>,
         K: Copy + Kernel<P, D>,
-        P: Additive + Multiplicative + Copy + Debug + Ord + TryInto<D>,
-        <P as TryInto<D>>::Error: Debug,
-        D: Additive
-            + Copy
-            + Debug
-            + Multiplicative
-            + Ord
-            + num_traits::FromPrimitive
-            + num_traits::Zero,
+        P: Additive + Copy + Ord,
+        D: Copy + Debug + Ord + Multiplicative + num_traits::FromPrimitive + num_traits::Zero,
     {
         // Abandon hope, all ye who enter here!
         // Okay… Slow breath in… and out…

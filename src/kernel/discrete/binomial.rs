@@ -48,7 +48,7 @@ impl<P, D> Binomial<P, D> {
 
     fn inverse_cdf(&self, cdf: D) -> P
     where
-        P: Copy + Debug + Into<D> + num_integer::Integer,
+        P: Copy + Into<D> + num_integer::Integer,
         D: Copy + num_traits::Float,
     {
         range_step_from(P::zero(), P::one())
@@ -74,7 +74,7 @@ where
 
 impl<P, D> Sample<P> for Binomial<P, D>
 where
-    P: Copy + Debug + Into<D> + num_integer::Integer,
+    P: Copy + Into<D> + num_integer::Integer,
     D: num_traits::Float + num_traits::FromPrimitive,
 {
     fn sample(&self, rng: &mut Rng) -> P {
