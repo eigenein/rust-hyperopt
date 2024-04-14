@@ -52,8 +52,8 @@ where
 {
     /// Generate a sample from the uniform kernel.
     fn sample(&self, rng: &mut Rng) -> T {
-        let normalized = rng.f64().mul_add(2.0, -1.0);
-        self.location + self.bandwidth * T::from_f64(normalized * SQRT_3).unwrap()
+        let normalized = rng.f64().mul_add(DOUBLE_SQRT_3, -SQRT_3);
+        self.location + self.bandwidth * T::from_f64(normalized).unwrap()
     }
 }
 
