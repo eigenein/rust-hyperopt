@@ -5,7 +5,7 @@ use fastrand::Rng;
 use crate::{
     consts::f64::FRAC_1_SQRT_TAU,
     kernel::{Density, Kernel, Sample},
-    traits::NumRng,
+    traits::{SelfAdd, SelfMul},
 };
 
 /// [Gaussian][1] kernel.
@@ -31,7 +31,7 @@ where
 
 impl<T> Sample<T> for Gaussian<T>
 where
-    T: Copy + NumRng + num_traits::FromPrimitive,
+    T: Copy + SelfAdd + SelfMul + num_traits::FromPrimitive,
 {
     /// [Generate a sample][1] from the Gaussian kernel.
     ///

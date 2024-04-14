@@ -1,52 +1,39 @@
 use core::ops::{Add, Div, Mul, Neg, Sub};
 
-/// Shortcut for additive operations.
-pub trait Additive<Rhs = Self, Output = Self>:
-    Add<Rhs, Output = Output> + Sub<Rhs, Output = Output>
-{
+macro_rules! impl_self_trait {
+    ($target_trait:ident, $source_trait:ident) => {
+        pub trait $target_trait<Rhs = Self, Output = Self>:
+            $source_trait<Rhs, Output = Output>
+        {
+        }
+
+        impl<T, Rhs, Output> $target_trait<Rhs, Output> for T where
+            T: $source_trait<Rhs, Output = Output>
+        {
+        }
+    };
 }
 
-impl<T, Rhs, Output> Additive<Rhs, Output> for T where
-    T: Add<Rhs, Output = Output> + Sub<Rhs, Output = Output>
-{
+impl_self_trait!(SelfAdd, Add);
+impl_self_trait!(SelfSub, Sub);
+impl_self_trait!(SelfMul, Mul);
+impl_self_trait!(SelfDiv, Div);
+
+pub trait SelfNeg<Output = Self>: Neg<Output = Output> {}
+
+impl<T, Output> SelfNeg<Output> for T where T: Neg<Output = Output> {}
+
+macro_rules! impl_derived_trait {
+    ($target_trait:ident, $source_trait:ident $(+$source_traits:ident)*) => {
+        pub trait $target_trait<Rhs = Self, Output = Self>:
+            $source_trait<Rhs, Output> $(+$source_traits<Rhs, Output>)* {}
+
+        impl<T, Rhs, Output> $target_trait<Rhs, Output> for T
+        where T:
+            $source_trait<Rhs, Output> $(+$source_traits<Rhs, Output>)*
+        {}
+    };
 }
 
-/// Shortcut for multiplicative operations.
-pub trait Multiplicative<Rhs = Self, Output = Self>:
-    Mul<Rhs, Output = Output> + Div<Rhs, Output = Output>
-{
-}
-
-impl<T, Rhs, Output> Multiplicative<Rhs, Output> for T where
-    T: Mul<Rhs, Output = Output> + Div<Rhs, Output = Output>
-{
-}
-
-/// Shortcut for a [rng][1] of numbers.
-///
-/// Do not confuse it with a random number generator.
-///
-/// [1]: https://en.wikipedia.org/wiki/Ring_(mathematics)#Variations_on_the_definition
-#[deprecated = "some types do not implement `Neg`"]
-pub trait NumRng<Rhs = Self, Output = Self>:
-    Additive<Rhs, Output> + Multiplicative<Rhs, Output> + Neg<Output = Output>
-{
-}
-
-impl<T, Rhs, Output> NumRng<Rhs, Output> for T where
-    T: Additive<Rhs, Output> + Multiplicative<Rhs, Output> + Neg<Output = Output>
-{
-}
-
-/// Shortcut for [ring][1] of numbers.
-///
-/// [1]: https://en.wikipedia.org/wiki/Ring_(mathematics)
-pub trait NumRing<Rhs = Self, Output = Self>:
-    NumRng<Rhs, Output> + num_traits::Zero + num_traits::One
-{
-}
-
-impl<T, Rhs, Output> NumRing<Rhs, Output> for T where
-    T: NumRng<Rhs, Output> + num_traits::Zero + num_traits::One
-{
-}
+impl_derived_trait!(Additive, SelfAdd + SelfSub);
+impl_derived_trait!(Multiplicative, SelfMul + SelfDiv);

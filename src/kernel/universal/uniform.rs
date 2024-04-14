@@ -3,7 +3,7 @@ use fastrand::Rng;
 use crate::{
     consts::f64::{DOUBLE_SQRT_3, SQRT_3},
     kernel::Kernel,
-    traits::{Additive, Multiplicative, NumRing},
+    traits::{Additive, Multiplicative, SelfDiv},
     Density,
     Sample,
 };
@@ -20,7 +20,7 @@ pub struct Uniform<P> {
 impl<P, D> Density<P, D> for Uniform<P>
 where
     P: Copy + Into<D> + PartialOrd + Additive,
-    D: NumRing + num_traits::FromPrimitive,
+    D: SelfDiv + num_traits::FromPrimitive + num_traits::Zero,
 {
     fn density(&self, at: P) -> D {
         if (self.min..=self.max).contains(&at) {
