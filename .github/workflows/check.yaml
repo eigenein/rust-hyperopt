@@ -41,7 +41,7 @@ jobs:
       - name: 🧪 Test
         run: |
           cargo +stable llvm-cov --lib --all-features --workspace --codecov --output-path=codecov.json
-          cargo +nightly llvm-cov --doc --codecov --output-path=codecov-doctests.json
+          cargo +nightly llvm-cov --doc --all-features --workspace --codecov --output-path=codecov-doctests.json
 
       - name: 📤 Upload coverage
         uses: codecov/codecov-action@v3
