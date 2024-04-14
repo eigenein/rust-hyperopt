@@ -14,8 +14,19 @@ use crate::{
 /// [1]: https://en.wikipedia.org/wiki/Continuous_uniform_distribution#Probability_density_function
 #[derive(Copy, Clone, Debug)]
 pub struct Uniform<P> {
-    pub min: P,
-    pub max: P,
+    min: P,
+    max: P,
+}
+
+impl<P> Uniform<P>
+where
+    P: PartialOrd,
+{
+    /// Construct the kernel with specified **inclusive** bounds.
+    pub fn with_bounds(min: P, max: P) -> Self {
+        debug_assert!(min <= max);
+        Self { min, max }
+    }
 }
 
 impl<P, D> Density<P, D> for Uniform<P>

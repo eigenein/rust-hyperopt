@@ -227,6 +227,6 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
         P: Ord,
         M: Ord,
     {
-        self.good_trials.best()
+        self.good_trials.best().or_else(|| self.bad_trials.best())
     }
 }
