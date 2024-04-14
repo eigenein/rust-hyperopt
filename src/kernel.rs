@@ -20,7 +20,7 @@ use crate::{iter::Triple, traits::Additive};
 /// - [`P`]: parameter type
 /// - [`D`]: density type
 pub trait Density<P, D> {
-    /// Calculate density at the given point.
+    /// Calculate the density at the given point.
     #[must_use]
     fn density(&self, at: P) -> D;
 }
@@ -31,11 +31,18 @@ pub trait Density<P, D> {
 ///
 /// - [`P`]: parameter type
 pub trait Sample<P> {
-    /// Generate a random sample.
+    /// Generate a random sample from the kernel.
     #[must_use]
     fn sample(&self, rng: &mut Rng) -> P;
 }
 
+/// A single kernel of a kernel density estimator.
+///
+/// Note that it does not directly correspond to the [mathematical definition][1],
+/// as for example, it is responsible for its own shift and scaling.
+/// This is useful for discrete kernels which do not normally have a bandwidth parameter `h`.
+///
+/// [1]: https://en.wikipedia.org/wiki/Kernel_(statistics)
 pub trait Kernel<P, D>: Density<P, D> + Sample<P> {
     /// Construct a kernel with the given location and bandwidth.
     #[must_use]
