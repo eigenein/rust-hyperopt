@@ -16,6 +16,8 @@ use crate::{
 ///
 /// The probability mass function is normalized by dividing on the standard deviation.
 ///
+/// Note that [`Binomial::density`] is a `O(at)` operation, so it's pretty slow.
+///
 /// [1]: https://en.wikipedia.org/wiki/Binomial_distribution
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct Binomial<P, D> {
