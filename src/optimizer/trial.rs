@@ -2,6 +2,7 @@ use std::{
     collections::{btree_set::Iter, BTreeSet},
     fmt::Debug,
     iter::Copied,
+    ops::RangeInclusive,
 };
 
 use crate::{iter::Triples, kde::KernelDensityEstimator, kernel::Kernel, traits::Additive};
@@ -74,7 +75,7 @@ impl<P, M> Trials<P, M> {
     {
         if self.by_parameter.insert(trial.parameter) {
             assert!(self.by_metric.insert(trial));
-            debug_assert_eq!(self.by_parameter.len(), self.by_metric.len());
+            assert_eq!(self.by_parameter.len(), self.by_metric.len());
             true
         } else {
             false
@@ -128,17 +129,21 @@ impl<P, M> Trials<P, M> {
         M: Ord,
     {
         assert!(self.by_parameter.remove(parameter));
-        debug_assert_eq!(self.by_parameter.len(), self.by_metric.len());
+        assert_eq!(self.by_parameter.len(), self.by_metric.len());
     }
 
     /// Construct a [`KernelDensityEstimator`] from the trials.
-    pub fn to_kde<'a, K>(&'a self) -> KernelDensityEstimator<impl Iterator<Item = K> + Clone + 'a>
+    pub fn to_kde<'a, K>(
+        &'a self,
+        bounds: RangeInclusive<P>,
+    ) -> KernelDensityEstimator<impl Iterator<Item = K> + Clone + 'a>
     where
         P: Copy + Ord + Additive,
         K: Copy + Kernel<Param = P> + 'a,
     {
         KernelDensityEstimator(
-            Triples::new(self.iter_parameters()).filter_map(|triple| K::from_triple(triple)),
+            Triples::new(self.iter_parameters())
+                .map(move |triple| K::from_triple(triple, *bounds.start()..=*bounds.end())),
         )
     }
 }

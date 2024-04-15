@@ -57,7 +57,7 @@ where
     type Param = T;
 
     fn new(location: T, bandwidth: T) -> Self {
-        debug_assert!(bandwidth > T::zero());
+        assert!(bandwidth > T::zero());
         Self {
             location,
             bandwidth,

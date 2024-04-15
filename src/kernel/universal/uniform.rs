@@ -120,7 +120,7 @@ where
     type Param = P;
 
     fn new(location: P, bandwidth: P) -> Self {
-        debug_assert!(bandwidth > P::zero());
+        assert!(bandwidth > P::zero());
         Self {
             min: P::from(bandwidth.into().mul_add(-SQRT_3, location.into())),
             max: P::from(bandwidth.into().mul_add(SQRT_3, location.into())),

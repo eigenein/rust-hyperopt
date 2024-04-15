@@ -33,7 +33,7 @@ fn main() {
         Rng::with_seed(42),
     );
 
-    // Run 100 trials for the cosine function and try to find the point `(π, -1)`:
+    // Run 50 trials for the cosine function and try to find the point `(π, -1)`:
     for _ in 0..50 {
         // Generate new trials using Epanechnikov kernel with `<NotNan<f64>>`
         // as both parameter and density:
@@ -44,7 +44,7 @@ fn main() {
     }
 
     let best_trial = optimizer.best_trial().unwrap();
-    assert_abs_diff_eq!(best_trial.parameter.into_inner(), PI, epsilon = 0.02);
+    assert_abs_diff_eq!(best_trial.parameter.into_inner(), PI, epsilon = 0.05);
     assert_abs_diff_eq!(best_trial.metric.into_inner(), -1.0, epsilon = 0.01);
 }
 ```

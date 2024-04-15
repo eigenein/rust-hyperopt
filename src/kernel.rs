@@ -9,6 +9,8 @@ pub mod continuous;
 pub mod discrete;
 pub mod universal;
 
+use std::ops::RangeInclusive;
+
 use fastrand::Rng;
 
 use crate::{iter::Triple, traits::Additive};
@@ -53,23 +55,34 @@ pub trait Kernel {
     fn new(location: Self::Param, bandwidth: Self::Param) -> Self;
 
     /// Construct the kernel for the triple of adjacent trials.
-    fn from_triple(triple: Triple<Self::Param>) -> Option<Self>
+    fn from_triple(triple: Triple<Self::Param>, bounds: RangeInclusive<Self::Param>) -> Self
     where
         Self: Sized,
         Self::Param: Copy + Ord + Additive,
     {
         match triple {
-            // For the middle point we take the maximum of the two distances:
-            Triple::Full(left, location, right) => Some(Kernel::new(
-                location,
-                (right - location).max(location - left),
-            )),
+            Triple::Full(left, location, right) => {
+                // For the middle point we take the maximum of the distances to the left and right neighbors:
+                Kernel::new(location, (right - location).max(location - left))
+            }
 
-            Triple::LeftMiddle(left, location) => Some(Self::new(location, location - left)),
+            Triple::LeftMiddle(left, location) => {
+                // For the left-middle pair: the maximum between them and to the right bound:
+                Self::new(location, (location - left).max(*bounds.end() - location))
+            }
 
-            Triple::MiddleRight(location, right) => Some(Self::new(location, right - location)),
+            Triple::MiddleRight(location, right) => {
+                // Similar, but to the left bound:
+                Self::new(location, (right - location).max(location - *bounds.start()))
+            }
 
-            _ => None,
+            Triple::Left(location) | Triple::Middle(location) | Triple::Right(location) => {
+                // Maximum between the distances to the bounds:
+                Self::new(
+                    location,
+                    (*bounds.end() - location).max(location - *bounds.start()),
+                )
+            }
         }
     }
 }

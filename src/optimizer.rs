@@ -47,7 +47,7 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
             init_kernel,
             rng,
             cutoff: 0.1,
-            n_candidates: 25,
+            n_candidates: 10,
             good_trials: Trials::new(),
             bad_trials: Trials::new(),
         }
@@ -172,8 +172,12 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
         // Okay… Slow breath in… and out…
 
         // First, construct the KDEs:
-        let good_kde = self.good_trials.to_kde::<K>();
-        let bad_kde = self.bad_trials.to_kde::<K>();
+        let good_kde = self
+            .good_trials
+            .to_kde::<K>(*self.range.start()..=*self.range.end());
+        let bad_kde = self
+            .bad_trials
+            .to_kde::<K>(*self.range.start()..=*self.range.end());
 
         // Now, sample candidates:
         let candidates = iter::from_fn(|| {
@@ -208,7 +212,7 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
                     + good_kde.density(parameter)
                         * K::Output::from_usize(self.good_trials.len()).unwrap())
                     / K::Output::from_usize(self.good_trials.len() + 1).unwrap();
-                debug_assert!(
+                assert!(
                     l >= K::Output::zero(),
                     "«good» density should not be negative: {l:?}"
                 );
@@ -216,7 +220,7 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
                     + bad_kde.density(parameter)
                         * K::Output::from_usize(self.bad_trials.len()).unwrap())
                     / K::Output::from_usize(self.bad_trials.len() + 1).unwrap();
-                debug_assert!(
+                assert!(
                     g > K::Output::zero(),
                     "«bad» density should be positive: {g:?}"
                 );
