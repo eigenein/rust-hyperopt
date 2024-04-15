@@ -100,7 +100,7 @@ where
 {
     type Param = P;
 
-    fn new(location: P, bandwidth: P) -> Self {
+    fn new(location: P, std: P) -> Self {
         // Solving these for `p` and `n`:
         // Bandwidth: σ = √(p(1-p)/n)
         // Location: l = pn
@@ -112,7 +112,7 @@ where
         // n = l/p = l/(1-(σ²/l)) = l/((l-σ²)/l) = l²/(l-σ²)
 
         // Restrict bandwidth to avoid infinite `n` and/or negative `p`:
-        let sigma_squared = (bandwidth * bandwidth).min(location - P::one());
+        let sigma_squared = (std * std).min(location - P::one());
 
         #[allow(clippy::suspicious_operation_groupings)]
         let n = (location * location / (location - sigma_squared)).clamp(P::one(), P::MAX_N);

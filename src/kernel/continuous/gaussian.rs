@@ -14,7 +14,7 @@ use crate::{
 #[derive(Copy, Clone, Debug)]
 pub struct Gaussian<T> {
     location: T,
-    bandwidth: T,
+    std: T,
 }
 
 impl<T> Density for Gaussian<T>
@@ -25,10 +25,10 @@ where
     type Output = T;
 
     fn density(&self, at: Self::Param) -> Self::Output {
-        let normalized = (at - self.location) / self.bandwidth;
+        let normalized = (at - self.location) / self.std;
         T::from_f64(FRAC_1_SQRT_TAU).unwrap()
             * (T::from_f64(-0.5).unwrap() * normalized * normalized).exp()
-            / self.bandwidth
+            / self.std
     }
 }
 
@@ -45,7 +45,7 @@ where
         let u1 = rng.f64();
         let u2 = rng.f64();
         let normalized = T::from_f64((-2.0 * u1.ln()).sqrt() * (TAU * u2).cos()).unwrap();
-        self.location + self.bandwidth * normalized
+        self.location + self.std * normalized
     }
 }
 
@@ -56,12 +56,9 @@ where
 {
     type Param = T;
 
-    fn new(location: T, bandwidth: T) -> Self {
-        assert!(bandwidth > T::zero());
-        Self {
-            location,
-            bandwidth,
-        }
+    fn new(location: T, std: T) -> Self {
+        assert!(std > T::zero());
+        Self { location, std }
     }
 }
 
@@ -73,7 +70,7 @@ where
     fn default() -> Self {
         Self {
             location: T::zero(),
-            bandwidth: T::one(),
+            std: T::one(),
         }
     }
 }

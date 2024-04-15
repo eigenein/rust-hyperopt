@@ -14,7 +14,7 @@ use crate::{
 #[derive(Copy, Clone, Debug)]
 pub struct Epanechnikov<T> {
     location: T,
-    bandwidth: T,
+    std: T,
 }
 
 impl<T> Density for Epanechnikov<T>
@@ -33,11 +33,10 @@ where
 
     fn density(&self, at: Self::Param) -> Self::Output {
         // Scale to `-1..1`:
-        let normalized = (at - self.location) / self.bandwidth / T::from_f64(SQRT_5).unwrap();
+        let normalized = (at - self.location) / self.std / T::from_f64(SQRT_5).unwrap();
         if (-T::one()..=T::one()).contains(&normalized) {
             // Calculate the density and normalize:
-            T::from_f64(0.75 / SQRT_5).unwrap() * (T::one() - normalized * normalized)
-                / self.bandwidth
+            T::from_f64(0.75 / SQRT_5).unwrap() * (T::one() - normalized * normalized) / self.std
         } else {
             // Zero outside the valid interval:
             T::zero()
@@ -69,7 +68,7 @@ where
         };
 
         // Scale to have a standard deviation of 1:
-        self.location + self.bandwidth * T::from_f64(normalized * SQRT_5).unwrap()
+        self.location + self.std * T::from_f64(normalized * SQRT_5).unwrap()
     }
 }
 
@@ -80,12 +79,9 @@ where
 {
     type Param = T;
 
-    fn new(location: T, bandwidth: T) -> Self {
-        assert!(bandwidth > T::zero());
-        Self {
-            location,
-            bandwidth,
-        }
+    fn new(location: T, std: T) -> Self {
+        assert!(std > T::zero());
+        Self { location, std }
     }
 }
 
@@ -96,7 +92,7 @@ where
     fn default() -> Self {
         Self {
             location: T::zero(),
-            bandwidth: T::one(),
+            std: T::one(),
         }
     }
 }

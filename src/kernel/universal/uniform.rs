@@ -119,11 +119,11 @@ where
 {
     type Param = P;
 
-    fn new(location: P, bandwidth: P) -> Self {
-        assert!(bandwidth > P::zero());
+    fn new(location: P, std: P) -> Self {
+        assert!(std > P::zero());
         Self {
-            min: P::from(bandwidth.into().mul_add(-SQRT_3, location.into())),
-            max: P::from(bandwidth.into().mul_add(SQRT_3, location.into())),
+            min: P::from(std.into().mul_add(-SQRT_3, location.into())),
+            max: P::from(std.into().mul_add(SQRT_3, location.into())),
             _density: PhantomData,
         }
     }

@@ -48,5 +48,5 @@ pub trait Kernel {
 
     /// Construct a kernel with the given location and bandwidth.
     #[must_use]
-    fn new(location: Self::Param, bandwidth: Self::Param) -> Self;
+    fn new(location: Self::Param, std: Self::Param) -> Self;
 }
