@@ -32,9 +32,14 @@ impl<P, D> Binomial<P, D> {
         P: Copy + num_integer::Integer + Into<D>,
         D: num_traits::Float,
     {
-        binomial(self.n, at).into()
-            * self.p.powf(at.into())
-            * (D::one() - self.p).powf((self.n - at).into())
+        if at <= self.n {
+            binomial(self.n, at).into()
+                * self.p.powf(at.into())
+                * (D::one() - self.p).powf((self.n - at).into())
+        } else {
+            // It is impossible to have more successes than experiments, hence the zero.
+            D::zero()
+        }
     }
 
     /// Standard deviation: √(p * (1 - p) / n).
@@ -174,6 +179,7 @@ mod tests {
             epsilon = 0.000_001
         );
         assert_abs_diff_eq!(Binomial { n: 1, p: 0.0 }.pmf(0), 1.0);
+        assert_abs_diff_eq!(Binomial { n: 20_u32, p: 0.5 }.pmf(21_u32), 0.0);
     }
 
     #[test]
