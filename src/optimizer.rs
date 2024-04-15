@@ -62,6 +62,14 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
 
     /// Set the number of candidates to choose the next trial from the acquisition function[^1].
     ///
+    /// Sampling from the acquisition function is cheaper than evaluating the target cost function,
+    /// so the more candidates – the more effective is the optimization step.
+    ///
+    /// However, the acquisition function is an approximation of a potential gain,
+    /// so the fewer candidates – the more precise is the optimization step.
+    ///
+    /// The number of candidates is therefore a tradeoff.
+    ///
     /// [^1]: Acquisition function is basically a ratio
     ///       between the «good» KDE and «bad» KDE at the same point.
     #[must_use]
