@@ -63,8 +63,8 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
 
     /// Set the ratio of «good» trials.
     #[must_use]
-    pub const fn cutoff(mut self, cutoff: f64) -> Self {
-        self.cutoff = cutoff;
+    pub fn cutoff(mut self, cutoff: impl Into<f64>) -> Self {
+        self.cutoff = cutoff.into();
         self
     }
 
@@ -81,8 +81,8 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
     /// [^1]: Acquisition function is basically a ratio
     ///       between the «good» KDE and «bad» KDE at the same point.
     #[must_use]
-    pub const fn n_candidates(mut self, n_candidates: usize) -> Self {
-        self.n_candidates = n_candidates;
+    pub fn n_candidates(mut self, n_candidates: impl Into<usize>) -> Self {
+        self.n_candidates = n_candidates.into();
         self
     }
 
@@ -95,8 +95,8 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
     /// however, is also prone to over-fitting. Higher bandwidth avoid over-fitting better,
     /// but is also smoother and less precise.
     #[must_use]
-    pub fn bandwidth(mut self, bandwidth: P) -> Self {
-        self.bandwidth = bandwidth;
+    pub fn bandwidth(mut self, bandwidth: impl Into<P>) -> Self {
+        self.bandwidth = bandwidth.into();
         self
     }
 
