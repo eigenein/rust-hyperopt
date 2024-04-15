@@ -132,12 +132,10 @@ impl<P, M> Trials<P, M> {
     }
 
     /// Construct a [`KernelDensityEstimator`] from the trials.
-    pub fn to_kde<'a, K, D>(
-        &'a self,
-    ) -> KernelDensityEstimator<impl Iterator<Item = K> + Clone + 'a>
+    pub fn to_kde<'a, K>(&'a self) -> KernelDensityEstimator<impl Iterator<Item = K> + Clone + 'a>
     where
         P: Copy + Ord + Additive,
-        K: Copy + Kernel<P, D> + 'a,
+        K: Copy + Kernel<Param = P> + 'a,
     {
         KernelDensityEstimator(
             Triples::new(self.iter_parameters()).filter_map(|triple| K::from_triple(triple)),

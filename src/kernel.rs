@@ -14,26 +14,28 @@ use fastrand::Rng;
 use crate::{iter::Triple, traits::Additive};
 
 /// Density function.
-///
-/// # Type parameters
-///
-/// - [`P`]: parameter type
-/// - [`D`]: density type
-pub trait Density<P, D> {
+pub trait Density {
+    /// Parameter type.
+    type Param;
+
+    /// Output density value type.
+    type Output;
+
     /// Calculate the density at the given point.
     #[must_use]
-    fn density(&self, at: P) -> D;
+    fn density(&self, at: Self::Param) -> Self::Output;
 }
 
-/// Sample function.
-///
-/// # Type parameters
-///
-/// - [`P`]: parameter type
-pub trait Sample<P> {
+/// Parameter sampler.
+pub trait Sample {
+    /// Sampled value type.
+    ///
+    /// It is called that because parameters are sampled for evaluation.
+    type Param;
+
     /// Generate a random sample from the kernel.
     #[must_use]
-    fn sample(&self, rng: &mut Rng) -> P;
+    fn sample(&self, rng: &mut Rng) -> Self::Param;
 }
 
 /// A single kernel of a kernel density estimator.
@@ -43,16 +45,18 @@ pub trait Sample<P> {
 /// This is useful for discrete kernels which do not normally have a bandwidth parameter `h`.
 ///
 /// [1]: https://en.wikipedia.org/wiki/Kernel_(statistics)
-pub trait Kernel<P, D>: Density<P, D> + Sample<P> {
+pub trait Kernel {
+    type Param;
+
     /// Construct a kernel with the given location and bandwidth.
     #[must_use]
-    fn new(location: P, bandwidth: P) -> Self;
+    fn new(location: Self::Param, bandwidth: Self::Param) -> Self;
 
     /// Construct the kernel for the triple of adjacent trials.
-    fn from_triple(triple: Triple<P>) -> Option<Self>
+    fn from_triple(triple: Triple<Self::Param>) -> Option<Self>
     where
         Self: Sized,
-        P: Copy + Ord + Additive,
+        Self::Param: Copy + Ord + Additive,
     {
         match triple {
             // For the middle point we take the maximum of the two distances:

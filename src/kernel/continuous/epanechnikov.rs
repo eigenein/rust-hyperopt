@@ -17,7 +17,7 @@ pub struct Epanechnikov<T> {
     bandwidth: T,
 }
 
-impl<T> Density<T, T> for Epanechnikov<T>
+impl<T> Density for Epanechnikov<T>
 where
     T: SelfSub
         + Multiplicative
@@ -28,7 +28,10 @@ where
         + num_traits::One
         + num_traits::Zero,
 {
-    fn density(&self, at: T) -> T {
+    type Param = T;
+    type Output = T;
+
+    fn density(&self, at: Self::Param) -> Self::Output {
         // Scale to `-1..1`:
         let normalized = (at - self.location) / self.bandwidth / T::from_f64(SQRT_5).unwrap();
         if (-T::one()..=T::one()).contains(&normalized) {
@@ -42,14 +45,16 @@ where
     }
 }
 
-impl<T> Sample<T> for Epanechnikov<T>
+impl<T> Sample for Epanechnikov<T>
 where
     T: Copy + SelfAdd + SelfMul + num_traits::FromPrimitive,
 {
+    type Param = T;
+
     /// [Generate a sample][1] from the Epanechnikov kernel.
     ///
     /// [1]: https://stats.stackexchange.com/questions/173637/generating-a-sample-from-epanechnikovs-kernel
-    fn sample(&self, rng: &mut Rng) -> T {
+    fn sample(&self, rng: &mut Rng) -> Self::Param {
         // Select the two smallest numbers of the three iid uniform samples:
         let (x1, x2) = min_2(rng.f64(), rng.f64(), rng.f64());
 
@@ -68,11 +73,13 @@ where
     }
 }
 
-impl<T> Kernel<T, T> for Epanechnikov<T>
+impl<T> Kernel for Epanechnikov<T>
 where
-    Self: Density<T, T> + Sample<T>,
+    Self: Density<Param = T, Output = T> + Sample<Param = T>,
     T: PartialOrd + num_traits::Zero,
 {
+    type Param = T;
+
     fn new(location: T, bandwidth: T) -> Self {
         debug_assert!(bandwidth > T::zero());
         Self {

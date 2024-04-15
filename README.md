@@ -28,15 +28,17 @@ fn main() {
     let min = NotNan::new(FRAC_PI_2).unwrap();
     let max = NotNan::new(PI + FRAC_PI_2).unwrap();
     let mut optimizer = Optimizer::new(
-        min..=max,                                      // parameter search limits
-        Uniform::<NotNan<f64>>::with_bounds(min..=max), // our initial guess is just as bad
+        min..=max,                       // parameter search limits
+        Uniform::with_bounds(min..=max), // our initial guess is just as bad
         Rng::with_seed(42),
     );
 
     // Run 100 trials for the cosine function and try to find the point `(π, -1)`:
     for _ in 0..50 {
-        // Generate new trials using Epanechnikov kernel:
-        let x = optimizer.new_trial::<Epanechnikov<_>, NotNan<f64>>();
+        // Generate new trials using Epanechnikov kernel with `<NotNan<f64>>` as both parameter and density:
+        let x = optimizer.new_trial::<Epanechnikov<NotNan<f64>>>();
+        
+        // Tell the optimizer the result of evaluation:
         optimizer.feed_back(x, NotNan::new(x.cos()).unwrap());
     }
 
@@ -64,8 +66,11 @@ fn main() {
     );
 
     for _ in 0..30 {
-        let x = optimizer.new_trial::<Binomial<i32, OrderedFloat<f64>>, _>();
-        optimizer.feed_back(x, x * x - 4 * x); // https://www.wolframalpha.com/input?i=x%5E2+-+4x
+        // Use the binomial kernel for `i32` as parameter and `OrderedFloat<f64>` as density:
+        let x = optimizer.new_trial::<Binomial<i32, OrderedFloat<f64>>>();
+        
+        // Optimize the parabola: https://www.wolframalpha.com/input?i=x%5E2+-+4x
+        optimizer.feed_back(x, x * x - 4 * x);
     }
 
     let best_trial = optimizer.best_trial().unwrap();

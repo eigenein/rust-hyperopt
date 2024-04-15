@@ -1,6 +1,7 @@
 use std::{fmt::Debug, iter, ops::RangeInclusive};
 
 use fastrand::Rng;
+use num_traits::{FromPrimitive, Zero};
 
 use crate::{
     kernel::Kernel,
@@ -17,7 +18,6 @@ mod trial;
 /// # Generic parameters
 ///
 /// - [`KInit`]: kernel type of the initial (prior) estimator component
-/// - [`K`]: kernel type of the trials, it may (and will likely) be different from the prior component
 /// - [`P`]: type of parameter that is optimized
 /// - [`M`]: value of the target function, the less – the better
 #[derive(Debug)]
@@ -38,7 +38,7 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
     ///
     /// # Parameters
     ///
-    /// - `range`: parameter range
+    /// - `range`: parameter search range, [`Optimizer`] will clamp random samples to this range
     /// - `init_kernel`: your prior belief about which values of the searched parameter is more optimal
     /// - `kernel`: kernel for the trial components
     pub const fn new(range: RangeInclusive<P>, init_kernel: KInit, rng: Rng) -> Self {
@@ -150,19 +150,22 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
     /// This method may panic if a random or calculated number cannot be converted to
     /// the parameter or density type.
     #[allow(clippy::cast_precision_loss)]
-    pub fn new_trial<K, D>(&mut self) -> P
+    pub fn new_trial<K>(&mut self) -> P
     where
-        KInit: Copy + Density<P, D> + Sample<P>,
-        K: Copy + Kernel<P, D>,
+        KInit: Copy + Density<Param = P> + Sample<Param = P>,
+        KInit::Output: Copy + Debug + Ord + Multiplicative + FromPrimitive + Zero,
+        K: Copy
+            + Kernel<Param = P>
+            + Sample<Param = P>
+            + Density<Param = P, Output = <KInit as Density>::Output>,
         P: Additive + Copy + Ord,
-        D: Copy + Debug + Ord + Multiplicative + num_traits::FromPrimitive + num_traits::Zero,
     {
         // Abandon hope, all ye who enter here!
         // Okay… Slow breath in… and out…
 
         // First, construct the KDEs:
-        let good_kde = self.good_trials.to_kde::<K, D>();
-        let bad_kde = self.bad_trials.to_kde::<K, D>();
+        let good_kde = self.good_trials.to_kde::<K>();
+        let bad_kde = self.bad_trials.to_kde::<K>();
 
         // Now, sample candidates:
         let candidates = iter::from_fn(|| {
@@ -194,16 +197,21 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
                 // Use weighted average of the initial component and KDE:
                 let init_density = self.init_kernel.density(parameter);
                 let l = (init_density
-                    + good_kde.density(parameter) * D::from_usize(self.good_trials.len()).unwrap())
-                    / D::from_usize(self.good_trials.len() + 1).unwrap();
+                    + good_kde.density(parameter)
+                        * K::Output::from_usize(self.good_trials.len()).unwrap())
+                    / K::Output::from_usize(self.good_trials.len() + 1).unwrap();
                 debug_assert!(
-                    l >= D::zero(),
+                    l >= K::Output::zero(),
                     "«good» density should not be negative: {l:?}"
                 );
                 let g = (init_density
-                    + bad_kde.density(parameter) * D::from_usize(self.bad_trials.len()).unwrap())
-                    / D::from_usize(self.bad_trials.len() + 1).unwrap();
-                debug_assert!(g > D::zero(), "«bad» density should be positive: {g:?}");
+                    + bad_kde.density(parameter)
+                        * K::Output::from_usize(self.bad_trials.len()).unwrap())
+                    / K::Output::from_usize(self.bad_trials.len() + 1).unwrap();
+                debug_assert!(
+                    g > K::Output::zero(),
+                    "«bad» density should be positive: {g:?}"
+                );
                 (parameter, l / g)
             })
             .take(self.n_candidates);

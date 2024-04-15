@@ -3,6 +3,7 @@
 use std::fmt::Debug;
 
 use fastrand::Rng;
+use num_traits::{FromPrimitive, Zero};
 
 use crate::{
     traits::{SelfAdd, SelfDiv},
@@ -22,37 +23,42 @@ use crate::{
 #[derive(Copy, Clone, Debug)]
 pub struct KernelDensityEstimator<C>(pub C);
 
-impl<P, D, C> Density<P, D> for KernelDensityEstimator<C>
+impl<Ks> Density for KernelDensityEstimator<Ks>
 where
-    C: Iterator + Clone,
-    C::Item: Density<P, D>,
-    P: Copy,
-    D: SelfAdd + SelfDiv + num_traits::FromPrimitive + num_traits::Zero,
+    Ks: Iterator + Clone,
+    Ks::Item: Density,
+    <<Ks as Iterator>::Item as Density>::Param: Copy,
+    <<Ks as Iterator>::Item as Density>::Output: SelfAdd + SelfDiv + FromPrimitive + Zero,
 {
+    type Param = <<Ks as Iterator>::Item as Density>::Param;
+    type Output = <<Ks as Iterator>::Item as Density>::Output;
+
     /// Calculate the KDE's density at the specified point.
     ///
     /// The method returns [`P::zero()`], if there are no components.
     #[allow(clippy::cast_precision_loss)]
-    fn density(&self, at: P) -> D {
+    fn density(&self, at: Self::Param) -> Self::Output {
         let (n_points, sum) = self
             .0
             .clone()
-            .fold((0_usize, D::zero()), |(n, sum), component| {
+            .fold((0_usize, Self::Output::zero()), |(n, sum), component| {
                 (n + 1, sum + component.density(at))
             });
         if n_points == 0 {
-            D::zero()
+            Self::Output::zero()
         } else {
-            sum / D::from_usize(n_points).unwrap()
+            sum / Self::Output::from_usize(n_points).unwrap()
         }
     }
 }
 
-impl<T, C> Sample<Option<T>> for KernelDensityEstimator<C>
+impl<Ks> Sample for KernelDensityEstimator<Ks>
 where
-    C: Iterator + Clone,
-    C::Item: Sample<T>,
+    Ks: Iterator + Clone,
+    Ks::Item: Sample,
 {
+    type Param = Option<<<Ks as Iterator>::Item as Sample>::Param>;
+
     /// Sample a random point from the KDE.
     ///
     /// The algorithm uses «[reservoir sampling][1]» to pick a random component,
@@ -61,7 +67,7 @@ where
     /// The method returns [`None`], if the estimator has no components.
     ///
     /// [1]: https://en.wikipedia.org/wiki/Reservoir_sampling
-    fn sample(&self, rng: &mut Rng) -> Option<T> {
+    fn sample(&self, rng: &mut Rng) -> Self::Param {
         let sample = self
             .0
             .clone()
@@ -83,7 +89,7 @@ mod tests {
 
     #[test]
     fn sample_single_component_ok() {
-        let kernel = Uniform::with_bounds(-1.0..=1.0);
+        let kernel: Uniform<_, ()> = Uniform::with_bounds(-1.0..=1.0);
         let kde = KernelDensityEstimator(iter::once(kernel));
         let mut rng = Rng::new();
 

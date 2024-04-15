@@ -62,32 +62,39 @@ impl<P, D> Binomial<P, D> {
     }
 }
 
-impl<P, D> Density<P, D> for Binomial<P, D>
+impl<P, D> Density for Binomial<P, D>
 where
     P: Copy + num_integer::Integer + Into<D>,
     D: num_traits::Float,
 {
-    fn density(&self, at: P) -> D {
+    type Param = P;
+    type Output = D;
+
+    fn density(&self, at: Self::Param) -> Self::Output {
         self.pmf(at) / self.std()
     }
 }
 
-impl<P, D> Sample<P> for Binomial<P, D>
+impl<P, D> Sample for Binomial<P, D>
 where
     P: Copy + Into<D> + num_integer::Integer,
     D: num_traits::Float + num_traits::FromPrimitive,
 {
-    fn sample(&self, rng: &mut Rng) -> P {
+    type Param = P;
+
+    fn sample(&self, rng: &mut Rng) -> Self::Param {
         self.inverse_cdf(D::from_f64(rng.f64()).unwrap())
     }
 }
 
-impl<P, D> Kernel<P, D> for Binomial<P, D>
+impl<P, D> Kernel for Binomial<P, D>
 where
-    Self: Density<P, D> + Sample<P>,
+    Self: Density<Param = P, Output = D> + Sample<Param = P>,
     P: Copy + Ord + MaxN + Additive + Multiplicative + Into<D> + num_traits::One,
     D: Multiplicative,
 {
+    type Param = P;
+
     fn new(location: P, bandwidth: P) -> Self {
         // Solving these for `p` and `n`:
         // Bandwidth: σ = √(p(1-p)/n)
