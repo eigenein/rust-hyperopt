@@ -1,8 +1,9 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, iter::Sum};
 
 use fastrand::Rng;
-use num_integer::binomial;
-use num_iter::range_step_from;
+use num_integer::Integer;
+use num_iter::{range_inclusive, range_step_from};
+use num_traits::{Float, FromPrimitive, ToPrimitive};
 
 use crate::{
     kernel::Kernel,
@@ -29,13 +30,24 @@ impl<P, D> Binomial<P, D> {
     /// Probability mass function.
     fn pmf(&self, at: P) -> D
     where
-        P: Copy + num_integer::Integer + Into<D>,
-        D: num_traits::Float,
+        P: Copy + Integer + Into<D> + ToPrimitive,
+        D: Float + Sum,
     {
-        if at <= self.n {
-            binomial(self.n, at).into()
-                * self.p.powf(at.into())
-                * (D::one() - self.p).powf((self.n - at).into())
+        if self.p == D::one() {
+            // The only possible outcome is `at == n`:
+            if at == self.n { D::one() } else { D::zero() }
+        } else if self.p == D::zero() {
+            // The only possible outcome is `at == 0`:
+            if at == P::zero() { D::one() } else { D::zero() }
+        } else if at <= self.n {
+            // lg(n choose k) = Σ ln(n + 1 - i) - ln(i)
+            let log_binomial: D = range_inclusive(P::one(), at)
+                .map(|i| (self.n - at + i).into().ln() - i.into().ln())
+                .sum();
+            let log_pmf = log_binomial
+                + at.into() * self.p.ln()
+                + (self.n - at).into() * (D::one() - self.p).ln();
+            log_pmf.exp()
         } else {
             // It is impossible to have more successes than experiments, hence the zero.
             D::zero()
@@ -53,8 +65,8 @@ impl<P, D> Binomial<P, D> {
 
     fn inverse_cdf(&self, cdf: D) -> P
     where
-        P: Copy + Into<D> + num_integer::Integer,
-        D: Copy + num_traits::Float,
+        P: Copy + Into<D> + Integer + ToPrimitive,
+        D: Copy + Float + Sum,
     {
         range_step_from(P::zero(), P::one())
             .scan(D::zero(), |acc, at| {
@@ -69,8 +81,8 @@ impl<P, D> Binomial<P, D> {
 
 impl<P, D> Density for Binomial<P, D>
 where
-    P: Copy + num_integer::Integer + Into<D>,
-    D: num_traits::Float,
+    P: Copy + Integer + Into<D> + ToPrimitive,
+    D: Float + Sum,
 {
     type Param = P;
     type Output = D;
@@ -82,8 +94,8 @@ where
 
 impl<P, D> Sample for Binomial<P, D>
 where
-    P: Copy + Into<D> + num_integer::Integer,
-    D: num_traits::Float + num_traits::FromPrimitive,
+    P: Copy + Into<D> + Integer + ToPrimitive,
+    D: Float + FromPrimitive + Sum,
 {
     type Param = P;
 
@@ -95,7 +107,7 @@ where
 impl<P, D> Kernel for Binomial<P, D>
 where
     Self: Density<Param = P, Output = D> + Sample<Param = P>,
-    P: Copy + Ord + MaxN + Additive + Multiplicative + Into<D> + num_traits::One,
+    P: Copy + Ord + Additive + Multiplicative + Into<D> + num_traits::One,
     D: Multiplicative,
 {
     type Param = P;
@@ -115,49 +127,12 @@ where
         let sigma_squared = (std * std).min(location - P::one());
 
         #[allow(clippy::suspicious_operation_groupings)]
-        let n = (location * location / (location - sigma_squared)).clamp(P::one(), P::MAX_N);
+        let n = (location * location / (location - sigma_squared)).max(P::one());
         Self {
             n,
             p: Into::<D>::into(location) / Into::<D>::into(n),
         }
     }
-}
-
-pub trait MaxN {
-    /// Maximum `n` such that there will be no overflow in [`binomial`].
-    const MAX_N: Self;
-}
-
-impl MaxN for u8 {
-    const MAX_N: Self = 10;
-}
-
-impl MaxN for i8 {
-    const MAX_N: Self = 9;
-}
-
-impl MaxN for u16 {
-    const MAX_N: Self = 18;
-}
-
-impl MaxN for i16 {
-    const MAX_N: Self = 17;
-}
-
-impl MaxN for u32 {
-    const MAX_N: Self = 34;
-}
-
-impl MaxN for i32 {
-    const MAX_N: Self = 33;
-}
-
-impl MaxN for u64 {
-    const MAX_N: Self = 67;
-}
-
-impl MaxN for i64 {
-    const MAX_N: Self = 66;
 }
 
 #[cfg(test)]
@@ -168,6 +143,7 @@ mod tests {
 
     #[test]
     fn pmf_ok() {
+        assert_abs_diff_eq!(Binomial { n: 5, p: 0.5 }.pmf(2), 0.3125);
         assert_abs_diff_eq!(
             Binomial { n: 20, p: 0.5 }.pmf(10),
             0.176_197,
@@ -178,12 +154,19 @@ mod tests {
             0.014_786,
             epsilon = 0.000_001
         );
-        assert_abs_diff_eq!(Binomial { n: 1, p: 0.0 }.pmf(0), 1.0);
         assert_abs_diff_eq!(Binomial { n: 20_u32, p: 0.5 }.pmf(21_u32), 0.0);
     }
 
     #[test]
-    fn cdf_ok() {
+    fn pmf_corner_cases() {
+        assert_abs_diff_eq!(Binomial { n: 1, p: 0.0 }.pmf(0), 1.0);
+        assert_abs_diff_eq!(Binomial { n: 1, p: 0.0 }.pmf(1), 0.0);
+        assert_abs_diff_eq!(Binomial { n: 1, p: 1.0 }.pmf(0), 0.0);
+        assert_abs_diff_eq!(Binomial { n: 1, p: 1.0 }.pmf(1), 1.0);
+    }
+
+    #[test]
+    fn inverse_cdf_ok() {
         assert_eq!(Binomial { n: 20, p: 0.5 }.inverse_cdf(0.588), 10);
         assert_eq!(Binomial { n: 20, p: 0.5 }.inverse_cdf(0.020_694), 5);
         assert_eq!(Binomial { n: 1, p: 0.0 }.inverse_cdf(1.0), 0);
@@ -206,11 +189,5 @@ mod tests {
         let kernel = Binomial::<_, f64>::new(2, 100);
         assert_eq!(kernel.n, 4);
         assert_abs_diff_eq!(kernel.p, 0.5);
-    }
-
-    #[test]
-    fn new_type_overflow() {
-        let kernel = Binomial::<u32, f64>::new(20, 3);
-        assert_eq!(kernel.n, u32::MAX_N);
     }
 }
