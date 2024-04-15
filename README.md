@@ -35,7 +35,8 @@ fn main() {
 
     // Run 100 trials for the cosine function and try to find the point `(π, -1)`:
     for _ in 0..50 {
-        // Generate new trials using Epanechnikov kernel with `<NotNan<f64>>` as both parameter and density:
+        // Generate new trials using Epanechnikov kernel with `<NotNan<f64>>`
+        // as both parameter and density:
         let x = optimizer.new_trial::<Epanechnikov<NotNan<f64>>>();
         
         // Tell the optimizer the result of evaluation:
@@ -66,7 +67,8 @@ fn main() {
     );
 
     for _ in 0..30 {
-        // Use the binomial kernel for `i32` as parameter and `OrderedFloat<f64>` as density:
+        // Use the binomial kernel for `i32` as parameter
+        // and `OrderedFloat<f64>` as density:
         let x = optimizer.new_trial::<Binomial<i32, OrderedFloat<f64>>>();
         
         // Optimize the parabola: https://www.wolframalpha.com/input?i=x%5E2+-+4x
