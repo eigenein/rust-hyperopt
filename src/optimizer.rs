@@ -198,8 +198,8 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
                     + bad_kde.density(parameter) * D::from_usize(self.bad_trials.len()).unwrap())
                     / D::from_usize(self.bad_trials.len() + 1).unwrap();
                 debug_assert!(
-                    g >= D::zero(),
-                    "«bad» density should not be negative: {g:?}"
+                    g > D::zero(),
+                    "«bad» density should be positive: {g:?}"
                 );
                 (parameter, l / g)
             })
