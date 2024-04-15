@@ -4,8 +4,11 @@ use fastrand::Rng;
 use num_traits::{FromPrimitive, Zero};
 
 use crate::{
+    iter::{Triple, Triples},
+    kde::KernelDensityEstimator,
     kernel::Kernel,
     optimizer::trial::{Trial, Trials},
+    range::CopyRange,
     traits::{Additive, Multiplicative},
     Density,
     Sample,
@@ -143,6 +146,53 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
         }
     }
 
+    /// Construct the kernel for the triple of adjacent trials.
+    fn construct_kernel<K>(triple: Triple<P>, bounds: RangeInclusive<P>) -> K
+    where
+        K: Kernel<Param = P>,
+        P: Copy + Ord + Additive,
+    {
+        match triple {
+            Triple::Full(left, location, right) => {
+                // For the middle point we take the maximum of the distances to the left and right neighbors:
+                Kernel::new(location, (right - location).max(location - left))
+            }
+
+            Triple::LeftMiddle(left, location) => {
+                // For the left-middle pair: the maximum between them and to the right bound:
+                K::new(location, (location - left).max(*bounds.end() - location))
+            }
+
+            Triple::MiddleRight(location, right) => {
+                // Similar, but to the left bound:
+                K::new(location, (right - location).max(location - *bounds.start()))
+            }
+
+            Triple::Left(location) | Triple::Middle(location) | Triple::Right(location) => {
+                // Maximum between the distances to the bounds:
+                K::new(
+                    location,
+                    (*bounds.end() - location).max(location - *bounds.start()),
+                )
+            }
+        }
+    }
+
+    /// Construct a [`KernelDensityEstimator`] from the trials.
+    fn construct_kde<K>(
+        parameters: impl Iterator<Item = P> + Clone,
+        bounds: RangeInclusive<P>,
+    ) -> KernelDensityEstimator<impl Iterator<Item = K> + Clone>
+    where
+        P: Copy + Ord + Additive,
+        K: Copy + Kernel<Param = P>,
+    {
+        KernelDensityEstimator(
+            Triples::new(parameters)
+                .map(move |triple| Self::construct_kernel(triple, bounds.copy())),
+        )
+    }
+
     /// Generate a parameter value for a new trial.
     ///
     /// After evaluating the target function with this parameter,
@@ -172,12 +222,10 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
         // Okay… Slow breath in… and out…
 
         // First, construct the KDEs:
-        let good_kde = self
-            .good_trials
-            .to_kde::<K>(*self.range.start()..=*self.range.end());
-        let bad_kde = self
-            .bad_trials
-            .to_kde::<K>(*self.range.start()..=*self.range.end());
+        let good_kde =
+            Self::construct_kde::<K>(self.good_trials.iter_parameters(), self.range.copy());
+        let bad_kde =
+            Self::construct_kde::<K>(self.bad_trials.iter_parameters(), self.range.copy());
 
         // Now, sample candidates:
         let candidates = iter::from_fn(|| {

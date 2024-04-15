@@ -5,6 +5,7 @@ mod iter;
 pub mod kde;
 pub mod kernel;
 mod optimizer;
+mod range;
 mod traits;
 
 pub use self::{

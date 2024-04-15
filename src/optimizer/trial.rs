@@ -2,10 +2,7 @@ use std::{
     collections::{btree_set::Iter, BTreeSet},
     fmt::Debug,
     iter::Copied,
-    ops::RangeInclusive,
 };
-
-use crate::{iter::Triples, kde::KernelDensityEstimator, kernel::Kernel, traits::Additive};
 
 /// Single trial in the optimizer.
 ///
@@ -130,21 +127,6 @@ impl<P, M> Trials<P, M> {
     {
         assert!(self.by_parameter.remove(parameter));
         assert_eq!(self.by_parameter.len(), self.by_metric.len());
-    }
-
-    /// Construct a [`KernelDensityEstimator`] from the trials.
-    pub fn to_kde<'a, K>(
-        &'a self,
-        bounds: RangeInclusive<P>,
-    ) -> KernelDensityEstimator<impl Iterator<Item = K> + Clone + 'a>
-    where
-        P: Copy + Ord + Additive,
-        K: Copy + Kernel<Param = P> + 'a,
-    {
-        KernelDensityEstimator(
-            Triples::new(self.iter_parameters())
-                .map(move |triple| K::from_triple(triple, *bounds.start()..=*bounds.end())),
-        )
     }
 }
 
