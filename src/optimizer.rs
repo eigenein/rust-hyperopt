@@ -1,7 +1,7 @@
 use std::{fmt::Debug, iter, ops::RangeInclusive};
 
 use fastrand::Rng;
-use num_traits::{FromPrimitive, Zero};
+use num_traits::{FromPrimitive, One, Zero};
 
 use crate::{
     iter::{Triple, Triples},
@@ -9,7 +9,7 @@ use crate::{
     kernel::Kernel,
     optimizer::trial::{Trial, Trials},
     range::CopyRange,
-    traits::{Additive, Multiplicative},
+    traits::{Additive, Multiplicative, SelfMul},
     Density,
     Sample,
 };
@@ -30,6 +30,7 @@ pub struct Optimizer<KInit, P, M> {
     rng: Rng,
     cutoff: f64,
     n_candidates: usize,
+    bandwidth: P,
     good_trials: Trials<P, M>,
     bad_trials: Trials<P, M>,
 }
@@ -44,13 +45,17 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
     /// - `range`: parameter search range, [`Optimizer`] will clamp random samples to this range
     /// - `init_kernel`: your prior belief about which values of the searched parameter is more optimal
     /// - `kernel`: kernel for the trial components
-    pub const fn new(range: RangeInclusive<P>, init_kernel: KInit, rng: Rng) -> Self {
+    pub fn new(range: RangeInclusive<P>, init_kernel: KInit, rng: Rng) -> Self
+    where
+        P: One,
+    {
         Self {
             range,
             init_kernel,
             rng,
             cutoff: 0.1,
             n_candidates: 10,
+            bandwidth: P::one(),
             good_trials: Trials::new(),
             bad_trials: Trials::new(),
         }
@@ -78,6 +83,20 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
     #[must_use]
     pub const fn n_candidates(mut self, n_candidates: usize) -> Self {
         self.n_candidates = n_candidates;
+        self
+    }
+
+    /// Set the bandwidth multiplier for the estimator kernels.
+    ///
+    /// Standard deviation of the kernel is the distance from the point to its furthest neighbour,
+    /// multiplied by this coefficient.
+    ///
+    /// The default multiplier is [`P::one`]. Lower bandwidth approximates the density better,
+    /// however, is also prone to over-fitting. Higher bandwidth avoid over-fitting better,
+    /// but is also smoother and less precise.
+    #[must_use]
+    pub fn bandwidth(mut self, bandwidth: P) -> Self {
+        self.bandwidth = bandwidth;
         self
     }
 
@@ -147,32 +166,41 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
     }
 
     /// Construct the kernel for the triple of adjacent trials.
-    fn construct_kernel<K>(triple: Triple<P>, bounds: RangeInclusive<P>) -> K
+    fn construct_kernel<K>(triple: Triple<P>, bounds: RangeInclusive<P>, bandwidth: P) -> K
     where
         K: Kernel<Param = P>,
-        P: Copy + Ord + Additive,
+        P: Copy + Ord + Additive + SelfMul,
     {
         match triple {
             Triple::Full(left, location, right) => {
                 // For the middle point we take the maximum of the distances to the left and right neighbors:
-                Kernel::new(location, (right - location).max(location - left))
+                Kernel::new(
+                    location,
+                    bandwidth * (right - location).max(location - left),
+                )
             }
 
             Triple::LeftMiddle(left, location) => {
                 // For the left-middle pair: the maximum between them and to the right bound:
-                K::new(location, (location - left).max(*bounds.end() - location))
+                K::new(
+                    location,
+                    bandwidth * (location - left).max(*bounds.end() - location),
+                )
             }
 
             Triple::MiddleRight(location, right) => {
                 // Similar, but to the left bound:
-                K::new(location, (right - location).max(location - *bounds.start()))
+                K::new(
+                    location,
+                    bandwidth * (right - location).max(location - *bounds.start()),
+                )
             }
 
             Triple::Left(location) | Triple::Middle(location) | Triple::Right(location) => {
                 // Maximum between the distances to the bounds:
                 K::new(
                     location,
-                    (*bounds.end() - location).max(location - *bounds.start()),
+                    bandwidth * (*bounds.end() - location).max(location - *bounds.start()),
                 )
             }
         }
@@ -182,14 +210,15 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
     fn construct_kde<K>(
         parameters: impl Iterator<Item = P> + Clone,
         bounds: RangeInclusive<P>,
+        bandwidth: P,
     ) -> KernelDensityEstimator<impl Iterator<Item = K> + Clone>
     where
-        P: Copy + Ord + Additive,
+        P: Copy + Ord + Additive + SelfMul,
         K: Copy + Kernel<Param = P>,
     {
         KernelDensityEstimator(
             Triples::new(parameters)
-                .map(move |triple| Self::construct_kernel(triple, bounds.copy())),
+                .map(move |triple| Self::construct_kernel(triple, bounds.copy(), bandwidth)),
         )
     }
 
@@ -216,16 +245,22 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
             + Kernel<Param = P>
             + Sample<Param = P>
             + Density<Param = P, Output = <KInit as Density>::Output>,
-        P: Additive + Copy + Ord,
+        P: Additive + Copy + Ord + SelfMul,
     {
         // Abandon hope, all ye who enter here!
         // Okay… Slow breath in… and out…
 
         // First, construct the KDEs:
-        let good_kde =
-            Self::construct_kde::<K>(self.good_trials.iter_parameters(), self.range.copy());
-        let bad_kde =
-            Self::construct_kde::<K>(self.bad_trials.iter_parameters(), self.range.copy());
+        let good_kde = Self::construct_kde::<K>(
+            self.good_trials.iter_parameters(),
+            self.range.copy(),
+            self.bandwidth,
+        );
+        let bad_kde = Self::construct_kde::<K>(
+            self.bad_trials.iter_parameters(),
+            self.range.copy(),
+            self.bandwidth,
+        );
 
         // Now, sample candidates:
         let candidates = iter::from_fn(|| {
