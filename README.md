@@ -30,13 +30,13 @@ fn main() {
     let mut optimizer = Optimizer::new(
         min..=max,                                      // parameter search limits
         Uniform::<NotNan<f64>>::with_bounds(min..=max), // our initial guess is just as bad
+        Rng::with_seed(42),
     );
 
     // Run 100 trials for the cosine function and try to find the point `(π, -1)`:
-    let mut rng = Rng::with_seed(42);
     for _ in 0..50 {
         // Generate new trials using Epanechnikov kernel:
-        let x = optimizer.new_trial::<Epanechnikov<_>, NotNan<f64>>(&mut rng);
+        let x = optimizer.new_trial::<Epanechnikov<_>, NotNan<f64>>();
         optimizer.feed_back(x, NotNan::new(x.cos()).unwrap());
     }
 
@@ -60,11 +60,11 @@ fn main() {
     let mut optimizer = Optimizer::new(
         -100..=100,
         Uniform::with_bounds(-100..=100),
+        Rng::with_seed(42),
     );
 
-    let mut rng = Rng::with_seed(42);
     for _ in 0..30 {
-        let x = optimizer.new_trial::<Binomial<i32, OrderedFloat<f64>>, _>(&mut rng);
+        let x = optimizer.new_trial::<Binomial<i32, OrderedFloat<f64>>, _>();
         optimizer.feed_back(x, x * x - 4 * x); // https://www.wolframalpha.com/input?i=x%5E2+-+4x
     }
 

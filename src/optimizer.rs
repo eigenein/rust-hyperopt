@@ -24,6 +24,7 @@ mod trial;
 pub struct Optimizer<KInit, P, M> {
     range: RangeInclusive<P>,
     init_kernel: KInit,
+    rng: Rng,
     cutoff: f64,
     n_candidates: usize,
     good_trials: Trials<P, M>,
@@ -40,10 +41,11 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
     /// - `range`: parameter range
     /// - `init_kernel`: your prior belief about which values of the searched parameter is more optimal
     /// - `kernel`: kernel for the trial components
-    pub const fn new(range: RangeInclusive<P>, init_kernel: KInit) -> Self {
+    pub const fn new(range: RangeInclusive<P>, init_kernel: KInit, rng: Rng) -> Self {
         Self {
             range,
             init_kernel,
+            rng,
             cutoff: 0.1,
             n_candidates: 25,
             good_trials: Trials::new(),
@@ -148,7 +150,7 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
     /// This method may panic if a random or calculated number cannot be converted to
     /// the parameter or density type.
     #[allow(clippy::cast_precision_loss)]
-    pub fn new_trial<K, D>(&self, rng: &mut Rng) -> P
+    pub fn new_trial<K, D>(&mut self) -> P
     where
         KInit: Copy + Density<P, D> + Sample<P>,
         K: Copy + Kernel<P, D>,
@@ -164,12 +166,16 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
 
         // Now, sample candidates:
         let candidates = iter::from_fn(|| {
-            if self.good_trials.len() < 2 || rng.usize(0..=self.good_trials.len()) == 0 {
+            if self.good_trials.len() < 2 || self.rng.usize(0..=self.good_trials.len()) == 0 {
                 // Select from the first component, if the good KDE is empty or with probability `1 / (n + 1)`.
-                Some(self.init_kernel.sample(rng))
+                Some(self.init_kernel.sample(&mut self.rng))
             } else {
                 // Select normally from the good KDE:
-                Some(good_kde.sample(rng).expect("KDE should return a sample"))
+                Some(
+                    good_kde
+                        .sample(&mut self.rng)
+                        .expect("KDE should return a sample"),
+                )
             }
         });
 
@@ -197,10 +203,7 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
                 let g = (init_density
                     + bad_kde.density(parameter) * D::from_usize(self.bad_trials.len()).unwrap())
                     / D::from_usize(self.bad_trials.len() + 1).unwrap();
-                debug_assert!(
-                    g > D::zero(),
-                    "«bad» density should be positive: {g:?}"
-                );
+                debug_assert!(g > D::zero(), "«bad» density should be positive: {g:?}");
                 (parameter, l / g)
             })
             .take(self.n_candidates);
