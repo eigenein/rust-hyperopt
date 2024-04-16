@@ -5,7 +5,10 @@ use fastrand::Rng;
 use crate::{
     consts::f64::{DOUBLE_SQRT_3, SQRT_3},
     kernel::Kernel,
-    traits::{Additive, Multiplicative, SelfDiv},
+    traits::{
+        loopback::SelfDiv,
+        shortcuts::{Additive, Multiplicative},
+    },
     Density,
     Sample,
 };

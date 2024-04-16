@@ -1,11 +1,12 @@
 use std::{f64::consts::TAU, fmt::Debug};
 
 use fastrand::Rng;
+use num_traits::FromPrimitive;
 
 use crate::{
     consts::f64::FRAC_1_SQRT_TAU,
     kernel::{Density, Kernel, Sample},
-    traits::{SelfAdd, SelfMul},
+    traits::loopback::{SelfAdd, SelfMul},
 };
 
 /// [Gaussian][1] kernel.
@@ -34,7 +35,7 @@ where
 
 impl<T> Sample for Gaussian<T>
 where
-    T: Copy + SelfAdd + SelfMul + num_traits::FromPrimitive,
+    T: Copy + SelfAdd + SelfMul + FromPrimitive,
 {
     type Param = T;
 

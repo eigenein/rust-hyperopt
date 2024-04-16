@@ -1,11 +1,15 @@
 use std::fmt::Debug;
 
 use fastrand::Rng;
+use num_traits::FromPrimitive;
 
 use crate::{
     consts::f64::SQRT_5,
     kernel::{Density, Kernel, Sample},
-    traits::{Multiplicative, SelfAdd, SelfMul, SelfNeg, SelfSub},
+    traits::{
+        loopback::{SelfAdd, SelfMul, SelfNeg, SelfSub},
+        shortcuts::Multiplicative,
+    },
 };
 
 /// [Standardized][1] Epanechnikov (parabolic) kernel, over (-√5, +√5) range.
@@ -46,7 +50,7 @@ where
 
 impl<T> Sample for Epanechnikov<T>
 where
-    T: Copy + SelfAdd + SelfMul + num_traits::FromPrimitive,
+    T: Copy + SelfAdd + SelfMul + FromPrimitive,
 {
     type Param = T;
 

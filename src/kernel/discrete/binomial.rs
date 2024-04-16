@@ -7,7 +7,7 @@ use num_traits::{Float, FromPrimitive, ToPrimitive};
 
 use crate::{
     kernel::Kernel,
-    traits::{Additive, Multiplicative},
+    traits::shortcuts::{Additive, Multiplicative},
     Density,
     Sample,
 };
@@ -60,7 +60,7 @@ impl<P, D> Binomial<P, D> {
     fn std(&self) -> D
     where
         P: Copy + Into<D>,
-        D: num_traits::Float,
+        D: Float,
     {
         (self.n.into() * self.p * (D::one() - self.p)).sqrt()
     }

@@ -9,7 +9,10 @@ use crate::{
     kernel::Kernel,
     optimizer::trial::{Trial, Trials},
     range::CopyRange,
-    traits::{Multiplicative, SelfMul, SelfSub},
+    traits::{
+        loopback::{SelfMul, SelfSub},
+        shortcuts::Multiplicative,
+    },
     Density,
     Sample,
 };

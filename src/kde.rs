@@ -6,7 +6,7 @@ use fastrand::Rng;
 use num_traits::{FromPrimitive, Zero};
 
 use crate::{
-    traits::{SelfAdd, SelfDiv},
+    traits::loopback::{SelfAdd, SelfDiv},
     Density,
     Sample,
 };
