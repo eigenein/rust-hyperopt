@@ -51,7 +51,8 @@ where
 
 impl<T> Sample for Epanechnikov<T>
 where
-    T: Copy + SelfAdd + SelfMul + From<f64>,
+    T: Copy + SelfAdd + SelfMul + TryFrom<f64>,
+    <T as TryFrom<f64>>::Error: Debug,
 {
     type Param = T;
 
@@ -73,7 +74,9 @@ where
         };
 
         // Scale to have a standard deviation of 1:
-        self.location + self.std * T::from(normalized * f64::SQRT_5)
+        self.location
+            + self.std
+                * T::try_from(normalized * f64::SQRT_5).unwrap()
     }
 }
 
