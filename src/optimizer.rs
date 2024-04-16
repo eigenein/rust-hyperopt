@@ -28,12 +28,13 @@ mod trial;
 /// - [`M`]: value of the target function, the less – the better
 #[derive(Debug)]
 pub struct Optimizer<KInit, P, M> {
+    pub cutoff: f64,
+    pub n_candidates: usize,
+    pub bandwidth: P,
+
     range: RangeInclusive<P>,
     init_kernel: KInit,
     rng: Rng,
-    cutoff: f64,
-    n_candidates: usize,
-    bandwidth: P,
     good_trials: Trials<P, M>,
     bad_trials: Trials<P, M>,
 }
@@ -57,7 +58,7 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
             init_kernel,
             rng,
             cutoff: 0.1,
-            n_candidates: 10,
+            n_candidates: 25,
             bandwidth: P::one(),
             good_trials: Trials::new(),
             bad_trials: Trials::new(),
