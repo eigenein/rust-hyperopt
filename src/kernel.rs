@@ -9,6 +9,7 @@ use fastrand::Rng;
 
 pub mod continuous;
 pub mod discrete;
+pub mod multi;
 pub mod universal;
 
 /// Density function.
