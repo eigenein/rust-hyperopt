@@ -74,9 +74,7 @@ where
         };
 
         // Scale to have a standard deviation of 1:
-        self.location
-            + self.std
-                * T::try_from(normalized * f64::SQRT_5).unwrap()
+        self.location + self.std * T::try_from(normalized * f64::SQRT_5).unwrap()
     }
 }
 

@@ -1,4 +1,6 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, iter};
+
+use crate::traits::loopback::SelfAdd;
 
 /// Iterator over 3-tuple windows, including partial ones.
 ///
@@ -45,6 +47,25 @@ pub enum Triple<T> {
     Middle(T),
 }
 
+pub fn range_step_from<T>(start: T, step: T) -> impl Iterator<Item = T>
+where
+    T: Copy + SelfAdd,
+{
+    let mut item = start;
+    iter::from_fn(move || {
+        let yield_ = Some(item);
+        item = item + step;
+        yield_
+    })
+}
+
+pub fn range_inclusive<T>(start: T, end: T) -> impl Iterator<Item = T>
+where
+    T: Copy + SelfAdd + num_traits::One + PartialOrd,
+{
+    range_step_from(start, T::one()).take_while(move |item| *item <= end)
+}
+
 #[cfg(test)]
 mod tests {
     use std::iter;
@@ -53,12 +74,25 @@ mod tests {
     use crate::iter::Triple::*;
 
     #[test]
-    fn empty_ok() {
+    fn range_step_from_ok() {
+        assert_eq!(
+            range_step_from(1, 2).take(5).collect::<Vec<_>>(),
+            [1, 3, 5, 7, 9]
+        );
+    }
+
+    #[test]
+    fn range_inclusive_ok() {
+        assert_eq!(range_inclusive(1, 5).collect::<Vec<_>>(), [1, 2, 3, 4, 5]);
+    }
+
+    #[test]
+    fn triples_from_empty_ok() {
         assert_eq!(Triples::new(iter::empty::<()>()).collect::<Vec<_>>(), []);
     }
 
     #[test]
-    fn one_ok() {
+    fn triples_from_one_ok() {
         assert_eq!(
             Triples::new(iter::once(1)).collect::<Vec<_>>(),
             [Right(1), Middle(1), Left(1)]
@@ -66,7 +100,7 @@ mod tests {
     }
 
     #[test]
-    fn two_ok() {
+    fn triples_from_two_ok() {
         assert_eq!(
             Triples::new([1, 2].into_iter()).collect::<Vec<_>>(),
             [Right(1), MiddleRight(1, 2), LeftMiddle(1, 2), Left(2)]
@@ -74,7 +108,7 @@ mod tests {
     }
 
     #[test]
-    fn three_ok() {
+    fn triples_from_three_ok() {
         assert_eq!(
             Triples::new([1, 2, 3].into_iter()).collect::<Vec<_>>(),
             [

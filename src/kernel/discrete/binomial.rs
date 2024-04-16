@@ -2,10 +2,10 @@ use std::{fmt::Debug, iter::Sum};
 
 use fastrand::Rng;
 use num_integer::Integer;
-use num_iter::{range_inclusive, range_step_from};
-use num_traits::{Float, FromPrimitive, ToPrimitive};
+use num_traits::{Float, FromPrimitive};
 
 use crate::{
+    iter::{range_inclusive, range_step_from},
     kernel::Kernel,
     traits::shortcuts::{Additive, Multiplicative},
     Density,
@@ -32,7 +32,7 @@ impl<P, D> Binomial<P, D> {
     /// Probability mass function.
     fn pmf(&self, at: P) -> D
     where
-        P: Copy + Integer + Into<D> + ToPrimitive,
+        P: Copy + Integer + Into<D>,
         D: Float + Sum,
     {
         if self.p == D::one() {
@@ -67,7 +67,7 @@ impl<P, D> Binomial<P, D> {
 
     fn inverse_cdf(&self, cdf: D) -> P
     where
-        P: Copy + Into<D> + Integer + ToPrimitive,
+        P: Copy + Into<D> + Integer,
         D: Copy + Float + Sum,
     {
         range_step_from(P::zero(), P::one())
@@ -83,7 +83,7 @@ impl<P, D> Binomial<P, D> {
 
 impl<P, D> Density for Binomial<P, D>
 where
-    P: Copy + Integer + Into<D> + ToPrimitive,
+    P: Copy + Integer + Into<D>,
     D: Float + Sum,
 {
     type Param = P;
@@ -96,7 +96,7 @@ where
 
 impl<P, D> Sample for Binomial<P, D>
 where
-    P: Copy + Into<D> + Integer + ToPrimitive,
+    P: Copy + Into<D> + Integer,
     D: Float + FromPrimitive + Sum,
 {
     type Param = P;
