@@ -3,11 +3,11 @@ use std::{marker::PhantomData, ops::RangeInclusive};
 use fastrand::Rng;
 
 use crate::{
-    consts::f64::{DOUBLE_SQRT_3, SQRT_3},
+    constants::{DoubleSqrt3, Sqrt3},
     kernel::Kernel,
     traits::{
-        loopback::SelfDiv,
-        shortcuts::{Additive, Multiplicative},
+        loopback::{SelfAdd, SelfDiv, SelfMul, SelfMulAdd, SelfNeg},
+        shortcuts::Additive,
     },
     Density,
     Sample,
@@ -41,14 +41,14 @@ where
 impl<P, D> Density for Uniform<P, D>
 where
     P: Copy + Into<D> + PartialOrd + Additive,
-    D: SelfDiv + num_traits::FromPrimitive + num_traits::Zero,
+    D: SelfDiv + num_traits::Zero + DoubleSqrt3,
 {
     type Param = P;
     type Output = D;
 
     fn density(&self, at: Self::Param) -> Self::Output {
         if (self.min..=self.max).contains(&at) {
-            (self.max - self.min).into() / D::from_f64(DOUBLE_SQRT_3).unwrap()
+            (self.max - self.min).into() / D::DOUBLE_SQRT_3
         } else {
             D::zero()
         }
@@ -118,15 +118,15 @@ impl_sample_continuous!(f64);
 impl<P, D> Kernel for Uniform<P, D>
 where
     Self: Density<Param = P, Output = D> + Sample<Param = P>,
-    P: Copy + Additive + Multiplicative + Into<f64> + From<f64> + PartialOrd + num_traits::Zero,
+    P: Copy + SelfAdd + SelfMul + PartialOrd + num_traits::Zero + Sqrt3 + SelfNeg + SelfMulAdd,
 {
     type Param = P;
 
     fn new(location: P, std: P) -> Self {
         assert!(std > P::zero());
         Self {
-            min: P::from(std.into().mul_add(-SQRT_3, location.into())),
-            max: P::from(std.into().mul_add(SQRT_3, location.into())),
+            min: std.mul_add(-P::SQRT_3, location),
+            max: std.mul_add(P::SQRT_3, location),
             _density: PhantomData,
         }
     }

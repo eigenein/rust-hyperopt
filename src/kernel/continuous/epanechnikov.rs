@@ -1,13 +1,12 @@
 use std::fmt::Debug;
 
 use fastrand::Rng;
-use num_traits::FromPrimitive;
 
 use crate::{
-    consts::f64::SQRT_5,
+    constants::{Sqrt5, ThreeQuarters},
     kernel::{Density, Kernel, Sample},
     traits::{
-        loopback::{SelfAdd, SelfMul, SelfNeg, SelfSub},
+        loopback::{SelfAdd, SelfDiv, SelfMul, SelfNeg, SelfSub},
         shortcuts::Multiplicative,
     },
 };
@@ -28,19 +27,21 @@ where
         + Copy
         + PartialOrd
         + SelfNeg
-        + num_traits::FromPrimitive
+        + SelfDiv
         + num_traits::One
-        + num_traits::Zero,
+        + num_traits::Zero
+        + Sqrt5
+        + ThreeQuarters,
 {
     type Param = T;
     type Output = T;
 
     fn density(&self, at: Self::Param) -> Self::Output {
         // Scale to `-1..1`:
-        let normalized = (at - self.location) / self.std / T::from_f64(SQRT_5).unwrap();
+        let normalized = (at - self.location) / self.std / T::SQRT_5;
         if (-T::one()..=T::one()).contains(&normalized) {
             // Calculate the density and normalize:
-            T::from_f64(0.75 / SQRT_5).unwrap() * (T::one() - normalized * normalized) / self.std
+            T::THREE_QUARTERS / T::SQRT_5 * (T::one() - normalized * normalized) / self.std
         } else {
             // Zero outside the valid interval:
             T::zero()
@@ -50,7 +51,7 @@ where
 
 impl<T> Sample for Epanechnikov<T>
 where
-    T: Copy + SelfAdd + SelfMul + FromPrimitive,
+    T: Copy + SelfAdd + SelfMul + From<f64>,
 {
     type Param = T;
 
@@ -72,7 +73,7 @@ where
         };
 
         // Scale to have a standard deviation of 1:
-        self.location + self.std * T::from_f64(normalized * SQRT_5).unwrap()
+        self.location + self.std * T::from(normalized * f64::SQRT_5)
     }
 }
 
@@ -122,8 +123,8 @@ mod tests {
     fn density_inside_ok() {
         let kernel = Epanechnikov::<f64>::default();
         assert_abs_diff_eq!(kernel.density(0.0), 0.335_410_196_624_968_46);
-        assert_abs_diff_eq!(kernel.density(SQRT_5), 0.0);
-        assert_abs_diff_eq!(kernel.density(-SQRT_5), 0.0);
+        assert_abs_diff_eq!(kernel.density(f64::SQRT_5), 0.0);
+        assert_abs_diff_eq!(kernel.density(-f64::SQRT_5), 0.0);
     }
 
     #[test]

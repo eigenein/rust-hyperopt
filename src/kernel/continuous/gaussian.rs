@@ -4,9 +4,12 @@ use fastrand::Rng;
 use num_traits::FromPrimitive;
 
 use crate::{
-    consts::f64::FRAC_1_SQRT_TAU,
+    constants::{Frac1SqrtTau, OneHalf},
     kernel::{Density, Kernel, Sample},
-    traits::loopback::{SelfAdd, SelfMul},
+    traits::{
+        loopback::{SelfAdd, SelfExp, SelfMul, SelfNeg, SelfSub},
+        shortcuts::Multiplicative,
+    },
 };
 
 /// [Gaussian][1] kernel.
@@ -20,16 +23,14 @@ pub struct Gaussian<T> {
 
 impl<T> Density for Gaussian<T>
 where
-    T: num_traits::Float + num_traits::FromPrimitive,
+    T: Copy + Frac1SqrtTau + SelfSub + Multiplicative + OneHalf + SelfExp + SelfNeg,
 {
     type Param = T;
     type Output = T;
 
     fn density(&self, at: Self::Param) -> Self::Output {
         let normalized = (at - self.location) / self.std;
-        T::from_f64(FRAC_1_SQRT_TAU).unwrap()
-            * (T::from_f64(-0.5).unwrap() * normalized * normalized).exp()
-            / self.std
+        T::FRAC_1_SQRT_TAU * (-T::ONE_HALF * normalized * normalized).exp() / self.std
     }
 }
 
