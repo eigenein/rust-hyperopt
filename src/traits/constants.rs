@@ -47,28 +47,28 @@ macro_rules! impl_for_ordered_float {
 }
 
 define_trait!(
-    Sqrt3,
+    ConstSqrt3,
     SQRT_3,
     1.7320508075688772935274463415058723669428052538103806280558069794,
     "√3"
 );
 define_trait!(
-    Sqrt5,
+    ConstSqrt5,
     SQRT_5,
     2.2360679774997896964091736687312762354406183596115257242708972454,
     "√5"
 );
 define_trait!(
-    DoubleSqrt3,
+    ConstDoubleSqrt3,
     DOUBLE_SQRT_3,
     3.4641016151377545870548926830117447338856105076207612561116139589,
     "2√3"
 );
 define_trait!(
-    Frac1SqrtTau,
+    ConstFrac1SqrtTau,
     FRAC_1_SQRT_TAU,
     0.3989422804014326779399460599343818684758586311649346576659258296,
     "1 / √(2π)"
 );
-define_trait!(ThreeQuarters, THREE_QUARTERS, 0.75, "`0.75`");
-define_trait!(OneHalf, ONE_HALF, 0.5, "`0.5`");
+define_trait!(ConstThreeQuarters, THREE_QUARTERS, 0.75, "`0.75`");
+define_trait!(ConstOneHalf, ONE_HALF, 0.5, "`0.5`");

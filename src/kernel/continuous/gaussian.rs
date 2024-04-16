@@ -4,7 +4,7 @@ use fastrand::Rng;
 use num_traits::FromPrimitive;
 
 use crate::{
-    constants::{Frac1SqrtTau, OneHalf},
+    constants::{ConstFrac1SqrtTau, ConstOneHalf},
     kernel::{Density, Kernel, Sample},
     traits::{
         loopback::{SelfAdd, SelfExp, SelfMul, SelfNeg, SelfSub},
@@ -23,7 +23,7 @@ pub struct Gaussian<T> {
 
 impl<T> Density for Gaussian<T>
 where
-    T: Copy + Frac1SqrtTau + SelfSub + Multiplicative + OneHalf + SelfExp + SelfNeg,
+    T: Copy + ConstFrac1SqrtTau + SelfSub + Multiplicative + ConstOneHalf + SelfExp + SelfNeg,
 {
     type Param = T;
     type Output = T;

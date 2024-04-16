@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use fastrand::Rng;
 
 use crate::{
-    constants::{Sqrt5, ThreeQuarters},
+    constants::{ConstSqrt5, ConstThreeQuarters},
     kernel::{Density, Kernel, Sample},
     traits::{
         loopback::{SelfAdd, SelfDiv, SelfMul, SelfNeg, SelfSub},
@@ -30,8 +30,8 @@ where
         + SelfDiv
         + num_traits::One
         + num_traits::Zero
-        + Sqrt5
-        + ThreeQuarters,
+        + ConstSqrt5
+        + ConstThreeQuarters,
 {
     type Param = T;
     type Output = T;
