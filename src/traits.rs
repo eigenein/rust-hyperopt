@@ -24,13 +24,13 @@ pub trait SelfNeg<Output = Self>: Neg<Output = Output> {}
 impl<T, Output> SelfNeg<Output> for T where T: Neg<Output = Output> {}
 
 macro_rules! impl_derived_trait {
-    ($target_trait:ident, $source_trait:ident $(+$source_traits:ident)*) => {
+    ($target_trait:ident, $source_trait:ident $(+$next_trait:ident)*) => {
         pub trait $target_trait<Rhs = Self, Output = Self>:
-            $source_trait<Rhs, Output> $(+$source_traits<Rhs, Output>)* {}
+            $source_trait<Rhs, Output> $(+$next_trait<Rhs, Output>)* {}
 
         impl<T, Rhs, Output> $target_trait<Rhs, Output> for T
         where T:
-            $source_trait<Rhs, Output> $(+$source_traits<Rhs, Output>)*
+            $source_trait<Rhs, Output> $(+$next_trait<Rhs, Output>)*
         {}
     };
 }
