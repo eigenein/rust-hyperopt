@@ -79,13 +79,14 @@ macro_rules! impl_multivariate {
     };
 }
 
-impl_multivariate!(0 K1, 1 K2,);
-impl_multivariate!(0 K1, 1 K2, 2 K3,);
-impl_multivariate!(0 K1, 1 K2, 2 K3, 3 K4,);
-impl_multivariate!(0 K1, 1 K2, 2 K3, 3 K4, 4 K5,);
-impl_multivariate!(0 K1, 1 K2, 2 K3, 3 K4, 4 K5, 5 K6,);
-impl_multivariate!(0 K1, 1 K2, 2 K3, 3 K4, 4 K5, 5 K6, 6 K7,);
-impl_multivariate!(0 K1, 1 K2, 2 K3, 3 K4, 4 K5, 5 K6, 6 K7, 7 K8,);
+impl_multivariate!(0 K1, );
+impl_multivariate!(0 K1, 1 K2, );
+impl_multivariate!(0 K1, 1 K2, 2 K3, );
+impl_multivariate!(0 K1, 1 K2, 2 K3, 3 K4, );
+impl_multivariate!(0 K1, 1 K2, 2 K3, 3 K4, 4 K5, );
+impl_multivariate!(0 K1, 1 K2, 2 K3, 3 K4, 4 K5, 5 K6, );
+impl_multivariate!(0 K1, 1 K2, 2 K3, 3 K4, 4 K5, 5 K6, 6 K7, );
+impl_multivariate!(0 K1, 1 K2, 2 K3, 3 K4, 4 K5, 5 K6, 6 K7, 7 K8, );
 
 #[cfg(test)]
 mod tests {
@@ -94,7 +95,10 @@ mod tests {
 
     #[test]
     fn multi_sample_ok() {
-        let kernel = (Uniform::<_, ()>::with_bounds(1..=1), Uniform::<_, ()>::with_bounds(2..=2));
+        let kernel = (
+            Uniform::<_, ()>::with_bounds(1..=1),
+            Uniform::<_, ()>::with_bounds(2..=2),
+        );
         assert_eq!(kernel.sample(&mut Rng::new()), (1, 2));
     }
 }
