@@ -9,7 +9,7 @@ use crate::{
     kernel::Kernel,
     optimizer::trial::{Trial, Trials},
     range::CopyRange,
-    traits::{Additive, Multiplicative, SelfMul},
+    traits::{Multiplicative, SelfMul, SelfSub},
     Density,
     Sample,
 };
@@ -169,7 +169,7 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
     fn construct_kernel<K>(triple: Triple<P>, bounds: RangeInclusive<P>, bandwidth: P) -> K
     where
         K: Kernel<Param = P>,
-        P: Copy + Ord + Additive + SelfMul,
+        P: Copy + Ord + SelfSub + SelfMul,
     {
         match triple {
             Triple::Full(left, location, right) => {
@@ -213,7 +213,7 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
         bandwidth: P,
     ) -> KernelDensityEstimator<impl Iterator<Item = K> + Clone>
     where
-        P: Copy + Ord + Additive + SelfMul,
+        P: Copy + Ord + SelfSub + SelfMul,
         K: Copy + Kernel<Param = P>,
     {
         KernelDensityEstimator(
@@ -245,7 +245,7 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
             + Kernel<Param = P>
             + Sample<Param = P>
             + Density<Param = P, Output = <KInit as Density>::Output>,
-        P: Additive + Copy + Ord + SelfMul,
+        P: Copy + Ord + SelfSub + SelfMul,
     {
         // Abandon hope, all ye who enter here!
         // Okay… Slow breath in… and out…

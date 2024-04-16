@@ -1,6 +1,6 @@
-# Checklist
+# Checklists
 
-## Adding new kernels
+## Implementing kernels
 
-- Implement the kernel for generic parameter and density types
-- Normalize the kernel function so that its standard deviation is equal to one for the unit bandwidth
+- Accept generic parameter and density types
+- Normalize `density()` so that the kernel standard deviation is equal to `1` for the unit bandwidth
