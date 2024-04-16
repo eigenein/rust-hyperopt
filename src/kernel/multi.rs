@@ -27,66 +27,64 @@
 
 use fastrand::Rng;
 
-use crate::{kernel::Kernel, Density, Sample};
+use crate::{kernel::Kernel, traits::SelfMul, Density, Sample};
 
 /// Implement [`Density`], [`Sample`], and [`Kernel`] for a generic tuple of kernels.
 ///
 /// Due to the macro syntax limitation, one also has to specify indices manually like so:
 ///
 /// ```ignore
-/// impl_multivariate!(0 K1, 1 K2, 2 K3,);
+/// impl_multivariate!(K0, 1 K1, 2 K2, 3 K3);
 /// ```
 #[macro_export]
 macro_rules! impl_multivariate {
-    ($($index:tt $type_:ident,)+) => {
-        impl<$($type_,)+> Density for ($($type_,)+)
+    ($first_type:ident $(,$next_index:tt $next_type:ident)*) => {
+        impl<Output, $first_type $(, $next_type)*> Density for ($first_type, $($next_type, )*)
         where
-            $($type_: Density,)+
+            Output: SelfMul,
+            $first_type: Density<Output = Output>,
+            $($next_type: Density<Output = Output>,)*
         {
-            type Param = ($(<$type_ as Density>::Param,)+);
+            // FIXME: implement `Param` new-type.
+            type Param = (<$first_type as Density>::Param, $(<$next_type as Density>::Param, )*);
 
-            type Output = ($(<$type_ as Density>::Output,)+);
+            type Output = Output;
 
-            #[inline]
             fn density(&self, at: Self::Param) -> Self::Output {
-                ($(self.$index.density(at.$index),)+)
+                self.0.density(at.0) $(* self.$next_index.density(at.$next_index))*
             }
         }
 
-        impl<$($type_,)+> Sample for ($($type_,)+)
+        impl<$first_type $(, $next_type)*> Sample for ($first_type, $($next_type,)*)
         where
-            $($type_: Sample,)+
+            $first_type: Sample,
+            $($next_type: Sample,)*
         {
-            type Param = ($(<$type_ as Sample>::Param,)+);
+            // FIXME: implement `Param` new-type.
+            type Param = (<$first_type as Sample>::Param, $(<$next_type as Sample>::Param, )*);
 
-            #[inline]
             fn sample(&self, rng: &mut Rng) -> Self::Param {
-                ($(self.$index.sample(rng),)+)
+                (self.0.sample(rng), $(self.$next_index.sample(rng), )*)
             }
         }
 
-        impl<$($type_,)+> Kernel for ($($type_,)+)
+        impl<$first_type $(, $next_type)*> Kernel for ($first_type, $($next_type,)*)
         where
-            $($type_: Kernel,)+
+            $first_type: Kernel,
+            $($next_type: Kernel,)*
         {
-            type Param = ($(<$type_ as Kernel>::Param,)+);
+            // FIXME: implement `Param` new-type.
+            type Param = (<$first_type as Kernel>::Param, $(<$next_type as Kernel>::Param, )*);
 
-            #[inline]
             fn new(location: Self::Param, std: Self::Param) -> Self {
-                ($($type_::new(location.$index, std.$index),)+)
+                ($first_type::new(location.0, std.0), $($next_type::new(location.$next_index, std.$next_index), )*)
             }
         }
     };
 }
 
-impl_multivariate!(0 K1, );
-impl_multivariate!(0 K1, 1 K2, );
-impl_multivariate!(0 K1, 1 K2, 2 K3, );
-impl_multivariate!(0 K1, 1 K2, 2 K3, 3 K4, );
-impl_multivariate!(0 K1, 1 K2, 2 K3, 3 K4, 4 K5, );
-impl_multivariate!(0 K1, 1 K2, 2 K3, 3 K4, 4 K5, 5 K6, );
-impl_multivariate!(0 K1, 1 K2, 2 K3, 3 K4, 4 K5, 5 K6, 6 K7, );
-impl_multivariate!(0 K1, 1 K2, 2 K3, 3 K4, 4 K5, 5 K6, 6 K7, 7 K8, );
+impl_multivariate!(K0);
+impl_multivariate!(K0, 1 K1);
 
 #[cfg(test)]
 mod tests {
