@@ -6,10 +6,7 @@ use num_traits::FromPrimitive;
 use crate::{
     constants::{ConstFrac1SqrtTau, ConstOneHalf},
     kernel::{Density, Kernel, Sample},
-    traits::{
-        loopback::{SelfAdd, SelfExp, SelfMul, SelfNeg, SelfSub},
-        shortcuts::Multiplicative,
-    },
+    traits::ops::{Arithmetic, Exp, Neg},
 };
 
 /// [Gaussian][1] kernel.
@@ -23,7 +20,7 @@ pub struct Gaussian<T> {
 
 impl<T> Density for Gaussian<T>
 where
-    T: Copy + ConstFrac1SqrtTau + SelfSub + Multiplicative + ConstOneHalf + SelfExp + SelfNeg,
+    T: Copy + ConstFrac1SqrtTau + Arithmetic + ConstOneHalf + Exp + Neg,
 {
     type Param = T;
     type Output = T;
@@ -36,7 +33,7 @@ where
 
 impl<T> Sample for Gaussian<T>
 where
-    T: Copy + SelfAdd + SelfMul + FromPrimitive,
+    T: Copy + Arithmetic + FromPrimitive,
 {
     type Param = T;
 

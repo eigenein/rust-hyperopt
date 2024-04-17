@@ -5,11 +5,7 @@ use std::fmt::Debug;
 use fastrand::Rng;
 use num_traits::{FromPrimitive, Zero};
 
-use crate::{
-    traits::loopback::{SelfAdd, SelfDiv},
-    Density,
-    Sample,
-};
+use crate::{traits::ops::Arithmetic, Density, Sample};
 
 /// [Kernel density estimator][1].
 ///
@@ -28,7 +24,7 @@ where
     Ks: Iterator + Clone,
     Ks::Item: Density,
     <<Ks as Iterator>::Item as Density>::Param: Copy,
-    <<Ks as Iterator>::Item as Density>::Output: SelfAdd + SelfDiv + FromPrimitive + Zero,
+    <<Ks as Iterator>::Item as Density>::Output: Arithmetic + FromPrimitive + Zero,
 {
     type Param = <<Ks as Iterator>::Item as Density>::Param;
     type Output = <<Ks as Iterator>::Item as Density>::Output;

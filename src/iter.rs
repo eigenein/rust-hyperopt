@@ -1,6 +1,6 @@
 use std::{fmt::Debug, iter};
 
-use crate::traits::loopback::SelfAdd;
+use crate::traits::ops::Additive;
 
 /// Iterator over 3-tuple windows, including partial ones.
 ///
@@ -49,7 +49,7 @@ pub enum Triple<T> {
 
 pub fn range_step_from<T>(start: T, step: T) -> impl Iterator<Item = T>
 where
-    T: Copy + SelfAdd,
+    T: Copy + Additive,
 {
     let mut item = start;
     iter::from_fn(move || {
@@ -61,7 +61,7 @@ where
 
 pub fn range_inclusive<T>(start: T, end: T) -> impl Iterator<Item = T>
 where
-    T: Copy + SelfAdd + num_traits::One + PartialOrd,
+    T: Copy + Additive + num_traits::One + PartialOrd,
 {
     range_step_from(start, T::one()).take_while(move |item| *item <= end)
 }

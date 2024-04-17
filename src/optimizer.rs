@@ -9,10 +9,7 @@ use crate::{
     kernel::Kernel,
     optimizer::trial::{Trial, Trials},
     range::CopyRange,
-    traits::{
-        loopback::{SelfMul, SelfSub},
-        shortcuts::Multiplicative,
-    },
+    traits::ops::Arithmetic,
     Density,
     Sample,
 };
@@ -173,7 +170,7 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
     fn construct_kernel<K>(triple: Triple<P>, bounds: RangeInclusive<P>, bandwidth: P) -> K
     where
         K: Kernel<Param = P>,
-        P: Copy + Ord + SelfSub + SelfMul,
+        P: Copy + Ord + Arithmetic,
     {
         match triple {
             Triple::Full(left, location, right) => {
@@ -217,7 +214,7 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
         bandwidth: P,
     ) -> KernelDensityEstimator<impl Iterator<Item = K> + Clone>
     where
-        P: Copy + Ord + SelfSub + SelfMul,
+        P: Copy + Ord + Arithmetic,
         K: Copy + Kernel<Param = P>,
     {
         KernelDensityEstimator(
@@ -244,12 +241,12 @@ impl<KInit, P, M> Optimizer<KInit, P, M> {
     pub fn new_trial<K>(&mut self) -> P
     where
         KInit: Copy + Density<Param = P> + Sample<Param = P>,
-        KInit::Output: Copy + Debug + Ord + Multiplicative + FromPrimitive + Zero,
+        KInit::Output: Copy + Debug + Ord + Arithmetic + FromPrimitive + Zero,
         K: Copy
             + Kernel<Param = P>
             + Sample<Param = P>
             + Density<Param = P, Output = <KInit as Density>::Output>,
-        P: Copy + Ord + SelfSub + SelfMul,
+        P: Copy + Ord + Arithmetic,
     {
         // Abandon hope, all ye who enter here!
         // Okay… Slow breath in… and out…
