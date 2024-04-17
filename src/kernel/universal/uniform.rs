@@ -5,7 +5,7 @@ use fastrand::Rng;
 use crate::{
     constants::{ConstDoubleSqrt3, ConstSqrt3},
     kernel::Kernel,
-    traits::ops::{Additive, Arithmetic, Multiplicative, Neg},
+    traits::ops::{Additive, MulAdd, Multiplicative, Neg},
     Density,
     Sample,
 };
@@ -115,7 +115,7 @@ impl_sample_continuous!(f64);
 impl<P, D> Kernel for Uniform<P, D>
 where
     Self: Density<Param = P, Output = D> + Sample<Param = P>,
-    P: Copy + Arithmetic + PartialOrd + num_traits::Zero + ConstSqrt3 + Neg,
+    P: Copy + MulAdd + PartialOrd + num_traits::Zero + ConstSqrt3 + Neg,
 {
     type Param = P;
 

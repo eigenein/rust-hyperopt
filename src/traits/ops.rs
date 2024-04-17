@@ -1,27 +1,27 @@
 /// Self-negation
-pub trait Neg<Output = Self>: core::ops::Neg<Output = Output> {}
+pub trait Neg: core::ops::Neg<Output = Self> {}
 
-impl<T, Output> Neg<Output> for T where T: core::ops::Neg<Output = Output> {}
+impl<T> Neg for T where T: core::ops::Neg<Output = Self> {}
 
 /// Addition and subtraction.
-pub trait Additive<Rhs = Self, Output = Self>:
-    core::ops::Add<Rhs, Output = Output> + core::ops::Sub<Rhs, Output = Output>
+pub trait Additive:
+    core::ops::Add<Self, Output = Self> + core::ops::Sub<Self, Output = Self> + Sized
 {
 }
 
-impl<T, Rhs, Output> Additive<Rhs, Output> for T where
-    T: core::ops::Add<Rhs, Output = Output> + core::ops::Sub<Rhs, Output = Output>
+impl<T> Additive for T where
+    T: core::ops::Add<Self, Output = Self> + core::ops::Sub<Self, Output = Self>
 {
 }
 
 /// Multiplication and division.
-pub trait Multiplicative<Rhs = Self, Output = Self>:
-    core::ops::Mul<Rhs, Output = Output> + core::ops::Div<Rhs, Output = Output>
+pub trait Multiplicative:
+    core::ops::Mul<Self, Output = Self> + core::ops::Div<Self, Output = Self> + Sized
 {
 }
 
-impl<T, Rhs, Output> Multiplicative<Rhs, Output> for T where
-    T: core::ops::Mul<Rhs, Output = Output> + core::ops::Div<Rhs, Output = Output>
+impl<T> Multiplicative for T where
+    T: core::ops::Mul<Self, Output = Self> + core::ops::Div<Self, Output = Self>
 {
 }
 
@@ -40,15 +40,9 @@ where
 }
 
 /// Arithmetic operations without assuming any identities.
-pub trait Arithmetic<Rhs = Self, Output = Self>:
-    Additive<Rhs, Output> + Multiplicative<Rhs, Output> + MulAdd
-{
-}
+pub trait Arithmetic: Additive + Multiplicative {}
 
-impl<T, Rhs, Output> Arithmetic<Rhs, Output> for T where
-    T: Additive<Rhs, Output> + Multiplicative<Rhs, Output> + MulAdd
-{
-}
+impl<T> Arithmetic for T where T: Additive + Multiplicative {}
 
 pub trait Exp {
     /// Raise `e` to the power of `self`.
