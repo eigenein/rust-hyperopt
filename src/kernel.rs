@@ -36,7 +36,7 @@ pub trait Sample {
     fn sample(&self, rng: &mut Rng) -> Self::Param;
 }
 
-/// A single kernel of a kernel density estimator.
+/// Kernel builder for [`crate::kde::KernelDensityEstimator`].
 ///
 /// Note that it does not directly correspond to the [mathematical definition][1],
 /// as for example, it is responsible for its own shift and scaling.
