@@ -44,7 +44,7 @@ jobs:
           cargo +nightly llvm-cov --doc --all-features --workspace --codecov --output-path=codecov-doctests.json
 
       - name: 📤 Upload coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           files: codecov.json,codecov-doctests.json
         env:
